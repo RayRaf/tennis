@@ -1,124 +1,82 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Теннисный счет</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .container { max-width: 400px; margin: auto; padding: 20px; }
-        .player-container { display: flex; align-items: center; justify-content: center; margin: 10px; }
-        .player { font-size: 24px; padding: 10px; border: 2px solid black; width: 150px; }
-        .active { border-color: red; font-weight: bold; }
-        .score { font-size: 40px; margin: 0 20px; width: 50px; }
-        button { font-size: 18px; padding: 10px; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настольный теннис</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e90ff, #00bfff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    h1 {
+      color: white;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    button {
+      background-color: white;
+      color: #1e90ff;
+      border: none;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover {
+      background-color: #1e90ff;
+      color: white;
+    }
+
+    @media (max-width: 500px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      button {
+        font-size: 1rem;
+        padding: 0.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Настольный теннис</h1>
-        <div id="setup">
-            <label>Игрок 1: <input type="text" id="player1" placeholder="Имя игрока 1"></label>
-            <label>Игрок 2: <input type="text" id="player2" placeholder="Имя игрока 2"></label>
-            <button onclick="startGame()">Начать игру</button>
-        </div>
-        <div id="game" style="display:none;">
-            <div class="player-container">
-                <button id="btnRemove1" onclick="removePoint(1)"></button>
-                <div id="p1" class="player">
-                    <span id="name1"></span>: <span class="score" id="score1">0</span>
-                </div>
-                <button id="btnAdd1" onclick="addPoint(1)"></button>
-            </div>
-            <div class="player-container">
-                <button id="btnRemove2" onclick="removePoint(2)"></button>
-                <div id="p2" class="player">
-                    <span id="name2"></span>: <span class="score" id="score2">0</span>
-                </div>
-                <button id="btnAdd2" onclick="addPoint(2)"></button>
-            </div>
-            <p id="turn"></p>
-            <p id="winner" style="font-size: 20px; font-weight: bold; color: green;"></p>
-            <button onclick="resetGame()">Новая игра</button>
-        </div>
-    </div>
-    <script>
-        let score = [0, 0];
-        let currentServer = 1;
-        let gameOver = false;
+  <h1>Настольный теннис</h1>
+  <div class="button-container">
+    <button onclick="location.href='{% url 'tennis_app:free_play' %}'">Свободная игра</button>
+    <button onclick="location.href='{% url 'tennis_app:my_tournaments' %}'">Мои турниры</button>
+    <button onclick="location.href='{% url 'tennis_app:rules' %}'">Правила</button>
+  </div>
 
-        function startGame() {
-            const player1Name = document.getElementById('player1').value;
-            const player2Name = document.getElementById('player2').value;
-
-            document.getElementById('name1').innerText = player1Name;
-            document.getElementById('name2').innerText = player2Name;
-            document.getElementById('game').style.display = 'block';
-            document.getElementById('setup').style.display = 'none';
-
-            document.getElementById('btnAdd1').innerText = `+1 ${player1Name}`;
-            document.getElementById('btnAdd2').innerText = `+1 ${player2Name}`;
-            document.getElementById('btnRemove1').innerText = `-1 ${player1Name}`;
-            document.getElementById('btnRemove2').innerText = `-1 ${player2Name}`;
-
-            updateTurn();
-        }
-
-        function addPoint(player) {
-            if (gameOver) return;
-            score[player - 1]++;
-            document.getElementById(`score${player}`).innerText = score[player - 1];
-            checkWinner();
-            updateTurn();
-        }
-
-        function removePoint(player) {
-            if (score[player - 1] > 0) {
-                score[player - 1]--;
-                document.getElementById(`score${player}`).innerText = score[player - 1];
-                checkWinner();
-                updateTurn();
-            }
-        }
-
-        function checkWinner() {
-            const diff = Math.abs(score[0] - score[1]);
-            const maxScore = Math.max(score[0], score[1]);
-
-            if (maxScore >= 11 && diff >= 2) {
-                const winnerName = score[0] > score[1] ? document.getElementById('name1').innerText : document.getElementById('name2').innerText;
-                document.getElementById('winner').innerText = `Победитель: ${winnerName}`;
-                gameOver = true;
-            } else {
-                document.getElementById('winner').innerText = '';
-                gameOver = false;
-            }
-
-            // Блокируем или разблокируем кнопки начисления очков
-            document.getElementById('btnAdd1').disabled = gameOver;
-            document.getElementById('btnAdd2').disabled = gameOver;
-        }
-
-        function updateTurn() {
-            let totalPoints = score[0] + score[1];
-            currentServer = (score[0] >= 10 && score[1] >= 10) ? totalPoints % 2 + 1 : Math.floor(totalPoints / 2) % 2 + 1;
-            document.getElementById('turn').innerText = `Подает: ${document.getElementById(`name${currentServer}`).innerText}`;
-            document.getElementById('p1').classList.toggle('active', currentServer === 1);
-            document.getElementById('p2').classList.toggle('active', currentServer === 2);
-        }
-
-        function resetGame() {
-            score = [0, 0];
-            document.getElementById('score1').innerText = '0';
-            document.getElementById('score2').innerText = '0';
-            document.getElementById('turn').innerText = '';
-            document.getElementById('winner').innerText = '';
-            document.getElementById('game').style.display = 'none';
-            document.getElementById('setup').style.display = 'block';
-            gameOver = false;
-            document.getElementById('btnAdd1').disabled = false;
-            document.getElementById('btnAdd2').disabled = false;
-        }
-    </script>
+  <script>
+    // Здесь можно добавить JS, если будет нужно управлять логикой кнопок или подгрузкой данных
+  </script>
 </body>
 </html>
