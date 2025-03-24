@@ -45,7 +45,7 @@
     <script>
         let score = [0, 0];
         let currentServer = 1;
-        let gameEnded = false;
+        let gameOver = false;
 
         function startGame() {
             const player1Name = document.getElementById('player1').value;
@@ -61,12 +61,11 @@
             document.getElementById('btnRemove1').innerText = `-1 ${player1Name}`;
             document.getElementById('btnRemove2').innerText = `-1 ${player2Name}`;
 
-            gameEnded = false;
             updateTurn();
         }
 
         function addPoint(player) {
-            if (gameEnded) return;
+            if (gameOver) return;
             score[player - 1]++;
             document.getElementById(`score${player}`).innerText = score[player - 1];
             checkWinner();
@@ -74,10 +73,10 @@
         }
 
         function removePoint(player) {
-            if (score[player - 1] > 0 && !gameEnded) {
+            if (score[player - 1] > 0) {
                 score[player - 1]--;
                 document.getElementById(`score${player}`).innerText = score[player - 1];
-                document.getElementById('winner').innerText = '';
+                checkWinner();
                 updateTurn();
             }
         }
@@ -89,8 +88,15 @@
             if (maxScore >= 11 && diff >= 2) {
                 const winnerName = score[0] > score[1] ? document.getElementById('name1').innerText : document.getElementById('name2').innerText;
                 document.getElementById('winner').innerText = `Победитель: ${winnerName}`;
-                gameEnded = true;
+                gameOver = true;
+            } else {
+                document.getElementById('winner').innerText = '';
+                gameOver = false;
             }
+
+            // Блокируем или разблокируем кнопки начисления очков
+            document.getElementById('btnAdd1').disabled = gameOver;
+            document.getElementById('btnAdd2').disabled = gameOver;
         }
 
         function updateTurn() {
@@ -109,7 +115,9 @@
             document.getElementById('winner').innerText = '';
             document.getElementById('game').style.display = 'none';
             document.getElementById('setup').style.display = 'block';
-            gameEnded = false;
+            gameOver = false;
+            document.getElementById('btnAdd1').disabled = false;
+            document.getElementById('btnAdd2').disabled = false;
         }
     </script>
 </body>
