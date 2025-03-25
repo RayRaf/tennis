@@ -1,52 +1,42 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Правила</title>
-    <style>
-        body {
-        background: linear-gradient(135deg, #1e90ff, #00bfff);
-        color: white;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding: 1rem;
-        min-height: 100vh;
-        }
-
-        h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-        text-align: center;
-        }
-
-        .content {
-        background-color: rgba(255, 255, 255, 0.1);
-        padding: 1rem;
-        border-radius: 10px;
-        max-width: 600px;
-        margin: 0 auto;
-        backdrop-filter: blur(10px);
-        }
-
-        ul {
-        padding-left: 1.5rem;
-        }
-
-        li {
-        margin-bottom: 0.5rem;
-        }
-    </style>
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-  <h1>Правила игры</h1>
+  <h1>Правила настольного тенниса (до 11 очков)</h1>
   <div class="content">
-    <p>Здесь будут размещены основные правила настольного тенниса. Например:</p>
-    <ul>
-      <li>Матч состоит из 3 или 5 партий до 11 очков.</li>
-      <li>Подача осуществляется поочередно через каждые 2 очка.</li>
-      <li>Мяч должен один раз отскочить на стороне соперника.</li>
-    </ul>
+      <ul>
+          <li><strong>Цель игры:</strong> Набрать 11 очков с отрывом минимум в 2 очка. При счете 10:10 игра продолжается до разницы в 2 очка.</li>
+          <li><strong>Подачи:</strong> Игроки выполняют по 2 подачи подряд, чередуясь. При счете 10:10 подача меняется после каждого очка.</li>
+          <li><strong>Правила подачи:</strong>
+              <ul>
+                  <li>Мяч подбрасывается вертикально вверх минимум на 16 см.</li>
+                  <li>Мяч должен сначала коснуться своей половины, затем половины соперника.</li>
+                  <li>Рука, подающая мяч, должна быть открытой и выше уровня стола.</li>
+              </ul>
+          </li>
+          <li><strong>Порядок игры:</strong>
+              <ul>
+                  <li>Первый подающий определяется по жребию или договоренности.</li>
+                  <li>После каждой партии – смена сторон.</li>
+                  <li>В решающей партии стороны меняются при счете 5:5.</li>
+              </ul>
+          </li>
+          <li><strong>Когда засчитывается очко:</strong>
+              <ul>
+                  <li>Если соперник не вернул мяч правильно.</li>
+                  <li>Мяч отскочил дважды на его стороне.</li>
+                  <li>Промах по мячу.</li>
+                  <li>Нарушение правил подачи или касание стола рукой.</li>
+              </ul>
+          </li>
+      </ul>
   </div>
+
 </body>
 </html>
