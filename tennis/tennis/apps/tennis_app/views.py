@@ -37,7 +37,7 @@ def login_register_view(request):
             if register_form.is_valid():
                 user = register_form.save()
                 login(request, user)
-                return redirect('home')  # поменяй на нужную тебе страницу
+                return redirect('tennis_app:main')  
             else:
                 messages.error(request, 'Ошибка при регистрации.')
         else:
@@ -47,7 +47,7 @@ def login_register_view(request):
             if login_form.is_valid():
                 user = login_form.get_user()
                 login(request, user)
-                return redirect('home')  # поменяй на нужную тебе страницу
+                return redirect('tennis_app:main')  
             else:
                 messages.error(request, 'Неверные данные для входа.')
     else:
