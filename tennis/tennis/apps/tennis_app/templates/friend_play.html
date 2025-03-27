@@ -30,22 +30,27 @@
         
         <div id="game" style="display:none;">
             <div class="player-container">
-                <button id="btnRemove1" onclick="removePoint(1)"></button>
+                <button id="btnRemove1" onclick="removePoint(1)">-1</button>
                 <div id="p1" class="player">
                     <span id="name1"></span>: <span class="score" id="score1">0</span>
                 </div>
-                <button id="btnAdd1" onclick="addPoint(1)"></button>
+                <button id="btnAdd1" onclick="addPoint(1)">+1</button>
             </div>
             <div class="player-container">
-                <button id="btnRemove2" onclick="removePoint(2)"></button>
+                <button id="btnRemove2" onclick="removePoint(2)">-1</button>
                 <div id="p2" class="player">
                     <span id="name2"></span>: <span class="score" id="score2">0</span>
                 </div>
-                <button id="btnAdd2" onclick="addPoint(2)"></button>
+                <button id="btnAdd2" onclick="addPoint(2)">+1</button>
             </div>
             <p id="turn"></p>
             <p id="winner"></p>
             <button onclick="resetGame()">Новая игра</button>
+                        <!-- Кнопка завершения игры -->
+            <button id="finishGameBtn" onclick="finishGame()" style="display: none;">Завершить партию</button>
+
+            <!-- Вставим скрытые поля для хранения времени начала -->
+            <input type="hidden" id="gameStartTime">
         </div>
     </div>
     <script src="{% static 'js/friend_play.js' %}"></script>

@@ -208,6 +208,8 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
 
+from .models import Game
+
 @csrf_exempt
 def save_friendly_game(request):
     if request.method == "POST":
@@ -216,31 +218,34 @@ def save_friendly_game(request):
         name1 = data.get("player1")
         name2 = data.get("player2")
         winner_name = data.get("winner")
-
         score1 = data.get("score1", 0)
         score2 = data.get("score2", 0)
+        start_time = data.get("start_time")
+        end_time = data.get("end_time")
 
-        # Находим игроков по имени, или создаем временных (если свободная игра)
         def get_or_create_player(name):
-            player, _ = Player.objects.get_or_create(full_name=name, defaults={
-                'club': None,  # свободный игрок
-                'rating': 1000
-            })
+            player, _ = Player.objects.get_or_create(full_name=name, defaults={'club': None, 'rating': 1000})
             return player
 
         player1 = get_or_create_player(name1)
         player2 = get_or_create_player(name2)
         winner = player1 if name1 == winner_name else player2
 
-        game = FriendlyGame.objects.create(
+        game_obj = FriendlyGame.objects.create(
             player1=player1,
             player2=player2,
             winner=winner,
             club=player1.club if player1.club == player2.club else None,
-            played_at=now()
+            played_at=end_time
         )
 
-        # можно добавить Game, если нужно сохранять партию
+        Game.objects.create(
+            friendly=game_obj,
+            start_time=start_time,
+            end_time=end_time,
+            score_player1=score1,
+            score_player2=score2
+        )
 
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "Invalid method"}, status=405)

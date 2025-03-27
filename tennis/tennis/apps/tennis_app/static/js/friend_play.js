@@ -2,6 +2,8 @@ let score = [0, 0];
 let currentServer = 1;
 let gameOver = false;
 
+let startTime = null;
+
 function startGame() {
     const player1Name = document.getElementById('player1').value;
     const player2Name = document.getElementById('player2').value;
@@ -10,12 +12,11 @@ function startGame() {
     document.getElementById('name2').innerText = player2Name;
     document.getElementById('game').style.display = 'block';
     document.getElementById('setup').style.display = 'none';
+    document.getElementById('finishGameBtn').style.display = 'inline-block';
 
-    document.getElementById('btnAdd1').innerText = `+1 ${player1Name}`;
-    document.getElementById('btnAdd2').innerText = `+1 ${player2Name}`;
-    document.getElementById('btnRemove1').innerText = `-1 ${player1Name}`;
-    document.getElementById('btnRemove2').innerText = `-1 ${player2Name}`;
-
+    score = [0, 0];
+    gameOver = false;
+    startTime = new Date().toISOString(); // фиксируем время начала
     updateTurn();
 }
 
@@ -41,30 +42,9 @@ function checkWinner() {
     const maxScore = Math.max(score[0], score[1]);
 
     if (maxScore >= 11 && diff >= 2) {
-        const name1 = document.getElementById('name1').innerText;
-        const name2 = document.getElementById('name2').innerText;
-        const winner = score[0] > score[1] ? name1 : name2;
-
+        const winner = score[0] > score[1] ? document.getElementById('name1').innerText : document.getElementById('name2').innerText;
         document.getElementById('winner').innerText = `Победитель: ${winner}`;
         gameOver = true;
-
-        // 📨 Сохраняем на сервер
-        fetch("/api/save_friendly_game/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken()
-            },
-            body: JSON.stringify({
-                player1: name1,
-                player2: name2,
-                winner: winner,
-                score1: score[0],
-                score2: score[1]
-            })
-        }).then(res => {
-            if (!res.ok) console.error("Ошибка сохранения игры");
-        });
     } else {
         document.getElementById('winner').innerText = '';
         gameOver = false;
@@ -107,4 +87,40 @@ function getCSRFToken() {
         }
     }
     return '';
+}
+
+
+function finishGame() {
+    if (!gameOver) {
+        alert("Сначала завершите игру (один из игроков должен победить).");
+        return;
+    }
+
+    const data = {
+        player1: document.getElementById('name1').innerText,
+        player2: document.getElementById('name2').innerText,
+        winner: document.getElementById('winner').innerText.replace("Победитель: ", ""),
+        score1: score[0],
+        score2: score[1],
+        start_time: startTime,
+        end_time: new Date().toISOString()
+    };
+
+    fetch("/api/save_friendly_game/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.status === "ok") {
+            alert("Игра успешно сохранена!");
+            location.reload();
+        } else {
+            alert("Ошибка при сохранении: " + res.error);
+        }
+    });
 }

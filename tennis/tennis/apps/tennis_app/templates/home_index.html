@@ -11,15 +11,17 @@
   <h1>Настольный теннис</h1>
 
   <div class="button-container">
-    <button onclick="location.href='{% url 'tennis_app:demo_play' %}'">Демо</button>
+    
 
     {% if user.is_authenticated %}
       <button onclick="location.href='{% url 'tennis_app:my_club' %}'">Мой клуб</button>
       <button onclick="location.href='{% url 'tennis_app:rules' %}'">Правила</button>
+      <button onclick="location.href='{% url 'tennis_app:demo_play' %}'">Демо</button>
       <button onclick="location.href='{% url 'tennis_app:logout' %}'">Выход</button>
     {% else %}
-      <button onclick="location.href='{% url 'tennis_app:rules' %}'">Правила</button>
       <button onclick="location.href='{% url 'tennis_app:login_register' %}'">Авторизация</button>
+      <button onclick="location.href='{% url 'tennis_app:demo_play' %}'">Демо</button>
+      <button onclick="location.href='{% url 'tennis_app:rules' %}'">Правила</button>
     {% endif %}
   </div>
 
