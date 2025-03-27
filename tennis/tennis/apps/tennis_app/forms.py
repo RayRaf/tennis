@@ -40,3 +40,21 @@ class RegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ("username", "email", "password1", "password2")
+
+
+from .models import Tournament, ClubEvent, Player
+
+class TournamentForm(forms.ModelForm):
+    class Meta:
+        model = Tournament
+        exclude = ['club', 'created_by']
+
+class ClubEventForm(forms.ModelForm):
+    class Meta:
+        model = ClubEvent
+        exclude = ['club', 'created_by']
+
+class PlayerForm(forms.ModelForm):
+    class Meta:
+        model = Player
+        exclude = ['club']

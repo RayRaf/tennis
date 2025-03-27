@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ club.name }}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <h1>{{ club.name }}</h1>
+  <div class="content">
+    <h2>События клуба</h2>
+    <ul>
+      {% for event in events %}
+        <li>{{ event.date|date:"d.m.Y H:i" }} — {{ event.title }}</li>
+      {% empty %}
+        <li>Нет событий</li>
+      {% endfor %}
+    </ul>
+    <button onclick="location.href='{% url 'tennis_app:add_event' club.id %}'">+</button>
+
+    <h2>Турниры клуба</h2>
+    <ul>
+      {% for tournament in tournaments %}
+        <li>{{ tournament.name }} ({{ tournament.start_date }})</li>
+      {% empty %}
+        <li>Нет турниров</li>
+      {% endfor %}
+    </ul>
+    <button onclick="location.href='{% url 'tennis_app:add_tournament' club.id %}'">+</button>
+
+    <h2>Игроки клуба</h2>
+    <ul>
+      {% for player in players %}
+        <li>
+          {{ player.full_name }} — рейтинг: {{ player.rating }},
+          побед: {{ player.stats.wins }}, игр: {{ player.stats.total_games }},
+          процент побед: {{ player.stats.win_percent }}%
+        </li>
+      {% empty %}
+        <li>Нет игроков</li>
+      {% endfor %}
+    </ul>
+    <button onclick="location.href='{% url 'tennis_app:add_player' club.id %}'">+</button>
+
+    <hr style="margin: 2rem 0; border-color: white;">
+
+    <button onclick="location.href='{% url 'tennis_app:friend_play' %}?club_id={{ club.id }}'">
+      Товарищеская партия
+    </button>
+  </div>
+</body>
+</html>
+

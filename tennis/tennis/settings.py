@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.join(PROJECT_ROOT, 'apps'))
 SECRET_KEY = 'django-insecure-h&@j^9m1_6w8z#ajeo+%sibmowr_vxfw+tod5ukr-luyva=y+2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://tennis.astrolis.ru'] 

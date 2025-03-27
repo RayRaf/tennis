@@ -1,0 +1,15 @@
+{% load static %}
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Нет клуба</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <h1>Вы пока не состоите в клубе</h1>
+  <div class="content">
+    <p>Чтобы участвовать в турнирах и играть с другими, создайте свой клуб или дождитесь приглашения.</p>
+    <button onclick="location.href='{% url 'tennis_app:create_club' %}'">Создать клуб</button>
+  </div>
+</body>
+</html>

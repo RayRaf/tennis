@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Теннисный счет</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h1>Настольный теннис</h1>
+    <div class="container">
+        <div id="setup">
+            <label>Игрок 1:
+                <select id="player1">
+                    {% for player in players %}
+                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Игрок 2:
+                <select id="player2">
+                    {% for player in players %}
+                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button onclick="startGame()">Начать игру</button>
+        </div>
+        
+        <div id="game" style="display:none;">
+            <div class="player-container">
+                <button id="btnRemove1" onclick="removePoint(1)"></button>
+                <div id="p1" class="player">
+                    <span id="name1"></span>: <span class="score" id="score1">0</span>
+                </div>
+                <button id="btnAdd1" onclick="addPoint(1)"></button>
+            </div>
+            <div class="player-container">
+                <button id="btnRemove2" onclick="removePoint(2)"></button>
+                <div id="p2" class="player">
+                    <span id="name2"></span>: <span class="score" id="score2">0</span>
+                </div>
+                <button id="btnAdd2" onclick="addPoint(2)"></button>
+            </div>
+            <p id="turn"></p>
+            <p id="winner"></p>
+            <button onclick="resetGame()">Новая игра</button>
+        </div>
+    </div>
+    <script src="{% static 'js/friend_play.js' %}"></script>
+</body>
+</html>
