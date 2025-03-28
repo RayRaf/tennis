@@ -13,16 +13,16 @@ def demo_play(request):
     return render(request, 'demo_play.html')
 
 
-def friend_play(request):
-    club_id = request.GET.get("club_id")
-    players = []
-    if club_id:
-        try:
-            club = Club.objects.get(id=club_id)
-            players = Player.objects.filter(club=club).order_by("full_name")
-        except Club.DoesNotExist:
-            pass
-    return render(request, 'friend_play.html', {"players": players})
+# def friend_play(request):
+#     club_id = request.GET.get("club_id")
+#     players = []
+#     if club_id:
+#         try:
+#             club = Club.objects.get(id=club_id)
+#             players = Player.objects.filter(club=club).order_by("full_name")
+#         except Club.DoesNotExist:
+#             pass
+#     return render(request, 'friend_play.html', {"players": players})
 
 
 def my_tournaments(request):
@@ -30,6 +30,24 @@ def my_tournaments(request):
 
 def rules(request):
     return render(request, 'rules.html')
+
+def friend_play(request):
+    user = request.user
+    club_ids = Club.objects.filter(clubmembership__user=user, clubmembership__is_active=True).values_list('id', flat=True)
+
+    if not club_ids:
+        return redirect('tennis_app:main')  # или сообщение: вы не состоите в клубе
+
+    club = Club.objects.get(id=club_ids[0])  # если пользователь состоит в нескольких — можно выбрать первым
+
+    players = Player.objects.filter(club=club).order_by('full_name')
+
+    return render(request, 'friend_play.html', {
+        'players': players,
+        'club': club
+    })
+
+
 
 
 
