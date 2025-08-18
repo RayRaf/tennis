@@ -1,18 +1,8 @@
-{% load static %}
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Создание клуба</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Создать клуб{% endblock %}
+{% block content %}
   <h1>Создать клуб</h1>
-  <div class="container">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Создать</button>
-    </form>
+  <div class="container narrow">
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary" type="submit">Создать</button></form>
   </div>
-</body>
-</html>
+{% endblock %}

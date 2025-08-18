@@ -29,7 +29,10 @@ SECRET_KEY = 'django-insecure-h&@j^9m1_6w8z#ajeo+%sibmowr_vxfw+tod5ukr-luyva=y+2
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://tennis.astrolis.ru'] 
+CSRF_TRUSTED_ORIGINS = [
+    'https://tennis.astrolis.ru',
+    'https://successfully-nonchalant-mayfly.cloudpub.ru',
+]
 
 
 # Application definition

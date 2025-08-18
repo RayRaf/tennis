@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+    <h1>{{ header }}</h1>
+    <div class="container">
+        {% if not is_tournament %}
+        <div id="setup">
+            <label>Игрок 1:
+                <select id="player1">
+                    {% for player in players %}
+                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Игрок 2:
+                <select id="player2">
+                    {% for player in players %}
+                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button onclick="startGame()">Начать игру</button>
+        </div>
+        {% endif %}
+    <div id="game" {% if is_tournament %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+            <div class="player-container">
+                <button id="btnRemove1" onclick="removePoint(1)">-1</button>
+                <div id="p1" class="player">
+                    <span id="name1">{% if is_tournament %}{{ match.player1.full_name }}{% endif %}</span>: <span class="score" id="score1">{% if is_tournament %}{{ score.0 }}{% else %}0{% endif %}</span>
+                </div>
+                <button id="btnAdd1" onclick="addPoint(1)">+1</button>
+            </div>
+            <div class="player-container">
+                <button id="btnRemove2" onclick="removePoint(2)">-1</button>
+                <div id="p2" class="player">
+                    <span id="name2">{% if is_tournament %}{{ match.player2.full_name }}{% endif %}</span>: <span class="score" id="score2">{% if is_tournament %}{{ score.1 }}{% else %}0{% endif %}</span>
+                </div>
+                <button id="btnAdd2" onclick="addPoint(2)">+1</button>
+            </div>
+            <p id="turn"></p>
+            <p id="winner">{% if is_tournament and match.finished %}Победитель: {{ match.winner.full_name }}{% endif %}</p>
+            {% if not is_tournament %}
+            <button onclick="resetGame()">Новая игра</button>
+            <button id="finishGameBtn" onclick="finishGame()" style="display: none;">Завершить партию</button>
+            <input type="hidden" id="gameStartTime">
+            {% else %}
+            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="p1"/><button type="submit">+1 {{ match.player1.full_name }}</button></form>
+            <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="p2"/><button type="submit">+1 {{ match.player2.full_name }}</button></form>
+            <a class="btn" href="{% url 'tennis_app:tournament_detail' match.tournament.id %}">Назад</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+{% if is_tournament %}
+<script src="{% static 'js/play.js' %}"></script>
+{% else %}
+<script src="{% static 'js/friend_play.js' %}"></script>
+{% endif %}
+{% endblock %}

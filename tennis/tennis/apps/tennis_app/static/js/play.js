@@ -6,10 +6,25 @@ function startGame() {
     const player1Name = document.getElementById('player1').value;
     const player2Name = document.getElementById('player2').value;
 
+    if (!player1Name.trim() || !player2Name.trim()) {
+        alert('Пожалуйста, введите имена игроков');
+        return;
+    }
+
     document.getElementById('name1').innerText = player1Name;
     document.getElementById('name2').innerText = player2Name;
-    document.getElementById('game').style.display = 'block';
-    document.getElementById('setup').style.display = 'none';
+    
+    // Добавляем анимации
+    const setupDiv = document.getElementById('setup');
+    const gameDiv = document.getElementById('game');
+    
+    setupDiv.classList.add('fade-out');
+    
+    setTimeout(() => {
+        setupDiv.style.display = 'none';
+        gameDiv.style.display = 'block';
+        gameDiv.classList.add('fade-in');
+    }, 400);
 
     document.getElementById('btnAdd1').innerText = `+1 ${player1Name}`;
     document.getElementById('btnAdd2').innerText = `+1 ${player2Name}`;
@@ -55,8 +70,25 @@ function checkWinner() {
 
 function updateTurn() {
     let totalPoints = score[0] + score[1];
-    currentServer = (score[0] >= 10 && score[1] >= 10) ? totalPoints % 2 + 1 : Math.floor(totalPoints / 2) % 2 + 1;
-    document.getElementById('turn').innerText = `Подает: ${document.getElementById(`name${currentServer}`).innerText}`;
+    
+    // Логика подач в настольном теннисе
+    if (score[0] >= 10 && score[1] >= 10) {
+        // Дейс: по 1 подаче, чередуем каждое очко
+        currentServer = (totalPoints % 2 === 0) ? 1 : 2;
+    } else {
+        // Обычная игра: по 2 подачи каждого игрока
+        const serveGroup = Math.floor(totalPoints / 2);
+        currentServer = (serveGroup % 2 === 0) ? 1 : 2;
+    }
+    
+    let turnText = `Подает: ${document.getElementById(`name${currentServer}`).innerText}`;
+    
+    // Добавляем индикатор дейса
+    if (score[0] >= 10 && score[1] >= 10) {
+        turnText += ' (ДЕЙС)';
+    }
+    
+    document.getElementById('turn').innerText = turnText;
     document.getElementById('p1').classList.toggle('active', currentServer === 1);
     document.getElementById('p2').classList.toggle('active', currentServer === 2);
 }
@@ -67,8 +99,20 @@ function resetGame() {
     document.getElementById('score2').innerText = '0';
     document.getElementById('turn').innerText = '';
     document.getElementById('winner').innerText = '';
-    document.getElementById('game').style.display = 'none';
-    document.getElementById('setup').style.display = 'block';
+    
+    // Добавляем анимации
+    const setupDiv = document.getElementById('setup');
+    const gameDiv = document.getElementById('game');
+    
+    gameDiv.classList.add('fade-out');
+    
+    setTimeout(() => {
+        gameDiv.style.display = 'none';
+        gameDiv.classList.remove('fade-out', 'fade-in');
+        setupDiv.style.display = 'block';
+        setupDiv.classList.remove('fade-out');
+    }, 400);
+    
     gameOver = false;
     document.getElementById('btnAdd1').disabled = false;
     document.getElementById('btnAdd2').disabled = false;

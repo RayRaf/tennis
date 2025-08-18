@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Пригласить администратора{% endblock %}
+{% block content %}
+  <h1>Пригласить администратора — {{ club.name }}</h1>
+  <div class="container">
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Создать приглашение</button></form>
+    <h2>Последние приглашения</h2>
+    <ul>
+      {% for inv in invites %}
+        <li>{{ inv.email }} — {% if inv.is_active %}активно, токен: {{ inv.token }}{% else %}принято{% endif %}</li>
+      {% empty %}<li>Нет приглашений</li>{% endfor %}
+    </ul>
+    <a class="btn" href="{% url 'tennis_app:club_detail' club.id %}">Назад</a>
+  </div>
+{% endblock %}

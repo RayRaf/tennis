@@ -1,89 +1,23 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Вход и регистрация</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-  <style>
-    .form-toggle {
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .form-toggle a {
-      color: #1e90ff;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    form p {
-      text-align: left;
-      margin: 1rem auto;
-      max-width: 300px;
-    }
-
-    form p label {
-      display: block;
-      margin-bottom: 0.5rem;
-    }
-
-    /* Заголовок формы — сброс наследуемых стилей */
-    #form-title {
-      color: #1e90ff;
-      background-color: transparent;
-      font-size: 2rem;
-      margin-bottom: 1.5rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+{% extends 'base.html' %}
+{% block title %}Вход / Регистрация{% endblock %}
+{% block extra_head %}
+<style>.auth-forms form p{margin:0 0 1rem;text-align:left}.auth-forms form p label{margin:0 0 .35rem}.auth-toggle{margin-top:1.2rem;font-size:.8rem;color:var(--text-dim)}.auth-toggle a{cursor:pointer;font-weight:600}#form-title{margin:0 0 1.4rem}.hidden{display:none}</style>
+{% endblock %}
+{% block content %}
+  <div class="container narrow auth-forms">
     <h1 id="form-title">Вход</h1>
-
-    <form method="post" id="login-form">
-      {% csrf_token %}
-      {{ login_form.as_p }}
-      <button type="submit" name="action" value="login">Войти</button>
-    </form>
-
-    <form method="post" id="register-form" class="hidden">
-      {% csrf_token %}
-      {{ register_form.as_p }}
-      <button type="submit" name="action" value="register">Зарегистрироваться</button>
-    </form>
-
-    <div class="form-toggle">
-      <span id="toggle-text">Нет аккаунта?</span>
-      <a onclick="toggleForms()">Зарегистрироваться</a>
-    </div>
+    <form method="post" id="login-form">{% csrf_token %}{{ login_form.as_p }}<button class="primary" type="submit" name="action" value="login">Войти</button></form>
+    <form method="post" id="register-form" class="hidden">{% csrf_token %}{{ register_form.as_p }}<button class="primary" type="submit" name="action" value="register">Зарегистрироваться</button></form>
+    <div class="auth-toggle"><span id="toggle-text">Нет аккаунта?</span> <a onclick="toggleForms()">Зарегистрироваться</a></div>
   </div>
-
-  <script>
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
-    const formTitle = document.getElementById("form-title");
-    const toggleText = document.getElementById("toggle-text");
-    const toggleLink = document.querySelector(".form-toggle a");
-
-    function toggleForms() {
-      loginForm.classList.toggle("hidden");
-      registerForm.classList.toggle("hidden");
-
-      const isLogin = loginForm.classList.contains("hidden");
-      formTitle.textContent = isLogin ? "Регистрация" : "Вход";
-      toggleText.textContent = isLogin
-        ? "Уже есть аккаунт?"
-        : "Нет аккаунта?";
-      toggleLink.textContent = isLogin
-        ? "Войти"
-        : "Зарегистрироваться";
-    }
-  </script>
-</body>
-</html>
+{% endblock %}
+{% block extra_js %}
+<script>
+const loginForm=document.getElementById('login-form');
+const registerForm=document.getElementById('register-form');
+const formTitle=document.getElementById('form-title');
+const toggleText=document.getElementById('toggle-text');
+const toggleLink=document.querySelector('.auth-toggle a');
+function toggleForms(){loginForm.classList.toggle('hidden');registerForm.classList.toggle('hidden');const isLogin=loginForm.classList.contains('hidden');formTitle.textContent=isLogin?'Регистрация':'Вход';toggleText.textContent=isLogin?'Уже есть аккаунт?':'Нет аккаунта?';toggleLink.textContent=isLogin?'Войти':'Зарегистрироваться';}
+</script>
+{% endblock %}

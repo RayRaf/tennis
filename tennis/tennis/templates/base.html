@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Настольный теннис{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a class="brand" href="{% url 'tennis_app:main' %}">🏓 TT Arena</a>
+        <button class="nav-toggle" aria-label="Меню" onclick="window.UI.toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="{% url 'tennis_app:rules' %}"><span>📋 Правила</span></a></li>
+        <li><a href="{% url 'tennis_app:demo_play' %}"><span>🎮 Демо</span></a></li>
+        {% if user.is_authenticated %}
+          <li><a href="{% url 'tennis_app:my_club' %}"><span>🏛️ Мой клуб</span></a></li>
+          <li><a href="{% url 'tennis_app:friend_play' %}"><span>⚔️ Игра</span></a></li>
+          <li><a href="{% url 'tennis_app:logout' %}"><span>🚪 Выход</span></a></li>
+        {% else %}
+          <li><a href="{% url 'tennis_app:login_register' %}"><span>🔐 Войти</span></a></li>
+        {% endif %}
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" onclick="window.UI.toggleTheme()" aria-label="Переключить тему" title="Переключить тему"></button>
+        {% if user.is_authenticated %}<span class="user-chip" title="Профиль">{{ user.username }}</span>{% endif %}
+      </div>
+    </nav>
+  </header>
+  <main class="page-wrapper">
+    {% if messages %}
+      <div class="flash-area">
+        {% for message in messages %}
+          <div class="flash flash-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">© {% now 'Y' %} TT Arena</footer>
+  <script src="{% static 'js/ui.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

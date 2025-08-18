@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Принять приглашение{% endblock %}
+{% block content %}
+  <h1>Принять приглашение администратора</h1>
+  <div class="container narrow">
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary" type="submit">Принять</button></form>
+    <a class="btn outline" href="{% url 'tennis_app:my_club' %}">К клубу</a>
+  </div>
+{% endblock %}

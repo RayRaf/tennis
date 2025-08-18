@@ -1,54 +1,73 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>{{ club.name }}</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-  <h1>{{ club.name }}</h1>
+{% extends 'base.html' %}
+{% block title %}{{ club.name }} — Клуб{% endblock %}
+{% block content %}
+  <h1>🏛️ {{ club.name }}</h1>
   <div class="content">
-    <h2>События клуба</h2>
-    <ul>
-      {% for event in events %}
-        <li>{{ event.date|date:"d.m.Y H:i" }} — {{ event.title }}</li>
-      {% empty %}
-        <li>Нет событий</li>
-      {% endfor %}
-    </ul>
-    <button onclick="location.href='{% url 'tennis_app:add_event' club.id %}'">+</button>
+    <h2>📅 События клуба</h2>
+    <div class="participants-list">
+      <ul>
+        {% for event in events %}
+          <li>
+            <span>{{ event.title }}</span>
+            <span class="seed-badge">{{ event.date|date:"d.m.Y H:i" }}</span>
+          </li>
+        {% empty %}
+          <li>Нет событий</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <a class="btn success" href="{% url 'tennis_app:add_event' club.id %}">➕ Добавить событие</a>
 
-    <h2>Турниры клуба</h2>
-    <ul>
-      {% for tournament in tournaments %}
-        <li>{{ tournament.name }} ({{ tournament.start_date }})</li>
-      {% empty %}
-        <li>Нет турниров</li>
-      {% endfor %}
-    </ul>
-    <button onclick="location.href='{% url 'tennis_app:add_tournament' club.id %}'">+</button>
+    <h2>🏆 Турниры клуба</h2>
+    <div class="participants-list">
+      <ul>
+        {% for tournament in tournaments %}
+          <li>
+            <a href="{% url 'tennis_app:tournament_detail' tournament.id %}" style="text-decoration: none; color: inherit;">
+              <span>{{ tournament.name }}</span>
+            </a>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span class="seed-badge">{{ tournament.start_date }}</span>
+              <span class="match-round">{{ tournament.get_tournament_type_display }}</span>
+            </div>
+          </li>
+        {% empty %}
+          <li>Нет турниров</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <a class="btn success" href="{% url 'tennis_app:add_tournament' club.id %}">➕ Добавить турнир</a>
 
-    <h2>Игроки клуба</h2>
-    <ul>
-      {% for player in players %}
-        <li>
-          {{ player.full_name }} — рейтинг: {{ player.rating }},
-          побед: {{ player.stats.wins }}, игр: {{ player.stats.total_games }},
-          процент побед: {{ player.stats.win_percent }}%
-        </li>
-      {% empty %}
-        <li>Нет игроков</li>
-      {% endfor %}
-    </ul>
-    <button onclick="location.href='{% url 'tennis_app:add_player' club.id %}'">+</button>
+    <h2>👥 Игроки клуба</h2>
+    <div class="tournament-table-wrapper" style="margin-bottom: 1.5rem;">
+      <table class="tournament-table">
+        <thead>
+          <tr><th>Игрок</th><th>Рейтинг</th><th>Побед</th><th>Игр</th><th>% побед</th></tr>
+        </thead>
+        <tbody>
+          {% for player in players %}
+            <tr>
+              <td><strong>{{ player.full_name }}</strong></td>
+              <td>{{ player.rating }}</td>
+              <td>{{ player.stats.wins }}</td>
+              <td>{{ player.stats.total_games }}</td>
+              <td>{{ player.stats.win_percent }}%</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Нет игроков</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a class="btn success" href="{% url 'tennis_app:add_player' club.id %}">➕ Добавить игрока</a>
 
-    <hr style="margin: 2rem 0; border-color: white;">
+    <div style="margin: 2rem 0; height: 2px; background: linear-gradient(90deg, transparent, var(--primary-gradient), transparent); border-radius: 1px;"></div>
 
-    <button onclick="location.href='{% url 'tennis_app:friend_play' %}?club_id={{ club.id }}'">
-      Товарищеская партия
-    </button>
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
+      <a class="btn primary" href="{% url 'tennis_app:friend_play' %}?club_id={{ club.id }}">⚔️ Товарищеская партия</a>
+      <a class="btn secondary" href="{% url 'tennis_app:invite_admin' club.id %}">📧 Пригласить администратора</a>
+      <a class="btn warning" href="{% url 'tennis_app:accept_invite' %}">📬 Принять приглашение</a>
+    </div>
   </div>
-</body>
-</html>
+{% endblock %}
 

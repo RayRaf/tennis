@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Добавить участника{% endblock %}
+{% block content %}
+  <h1>Добавить участника — {{ tournament.name }}</h1>
+  <div class="container narrow">
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="primary" type="submit">Сохранить</button></form>
+    <a class="btn outline" href="{% url 'tennis_app:tournament_detail' tournament.id %}">Назад</a>
+  </div>
+{% endblock %}

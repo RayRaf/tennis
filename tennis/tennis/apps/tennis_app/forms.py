@@ -42,12 +42,34 @@ class RegisterForm(UserCreationForm):
         fields = ("username", "email", "password1", "password2")
 
 
-from .models import Tournament, ClubEvent, Player
+from .models import Tournament, ClubEvent, Player, TournamentParticipant, ClubAdminInvite, Match
 
 class TournamentForm(forms.ModelForm):
     class Meta:
         model = Tournament
         exclude = ['club', 'created_by']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class TournamentParticipantForm(forms.ModelForm):
+    class Meta:
+        model = TournamentParticipant
+        fields = ['player', 'seed']
+
+class AdminInviteForm(forms.ModelForm):
+    class Meta:
+        model = ClubAdminInvite
+        fields = ['email']
+
+class AcceptInviteForm(forms.Form):
+    token = forms.CharField(max_length=64, label='Токен приглашения')
+
+
+class TournamentMatchForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = ['player1', 'player2']
 
 class ClubEventForm(forms.ModelForm):
     class Meta:

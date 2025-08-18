@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ tournament.name }} — Турнир{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+  <h1>{{ tournament.name }}</h1>
+  <div class="content">
+    <div class="tournament-info">
+      <p><strong>Тип:</strong> {{ tournament.get_tournament_type_display }} | <strong>Старт:</strong> {{ tournament.start_date }}</p>
+    </div>
+    
+    <h2>👥 Участники</h2>
+    <div class="participants-list">
+      <ul>
+        {% for p in participants %}
+          <li>
+            <span>{{ p.player.full_name }}</span>
+            {% if p.seed %}<span class="seed-badge">Посев {{ p.seed }}</span>{% endif %}
+          </li>
+        {% empty %}
+          <li>Нет участников</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <a class="btn" href="{% url 'tennis_app:add_participant' tournament.id %}">Добавить участника</a>
+    {% if tournament.tournament_type == 'elimination' %}
+      <a class="btn" href="{% url 'tennis_app:generate_matches' tournament.id %}">Сгенерировать сетку</a>
+    {% endif %}
+    
+    {% if tournament.tournament_type == 'round_robin' %}
+      <h2>🏆 Турнирная таблица</h2>
+      <table class="tournament-table">
+        <thead>
+          <tr><th>Место</th><th>Игрок</th><th>Очки</th></tr>
+        </thead>
+        <tbody>
+          {% for st in standings %}
+            <tr><td>{{ st.rank }}</td><td>{{ st.player.full_name }}</td><td>{{ st.points }}</td></tr>
+          {% empty %}
+            <tr><td colspan="3">Нет данных</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      
+      <h2>📊 Матрица результатов</h2>
+      <div style="overflow:auto;">
+        <table class="tournament-table">
+          <thead>
+            <tr>
+              <th>Игрок</th>
+              {% for row in rr_matrix %}<th>{{ row.player.full_name|slice:":8" }}</th>{% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rr_matrix %}
+              <tr>
+                <th style="text-align:left;">{{ row.player.full_name }}</th>
+                {% for cell in row.results %}
+                  <td class="matrix-cell {% if cell.status == 'W' %}cell-win{% elif cell.status == 'L' %}cell-loss{% elif cell.status == 'P' %}cell-progress{% elif cell.status == '—' %}cell-self{% else %}cell-empty{% endif %}" 
+                      data-player1="{{ row.player.id }}" 
+                      data-player2="{{ cell.opponent_id }}"
+                      data-tournament="{{ tournament.id }}"
+                      data-match-id="{{ cell.match_id }}"
+                      {% if cell.status == '' %}onclick="openMatchModal(this)"{% elif cell.status == 'P' %}onclick="startMatch(this)"{% endif %}>
+                    {% if cell.status == 'W' %}
+                      <div class="cell-content">
+                        <span class="result-icon">✓</span>
+                        <span class="sets-score">{{ cell.sets_score }}</span>
+                      </div>
+                    {% elif cell.status == 'L' %}
+                      <div class="cell-content">
+                        <span class="result-icon">✗</span>
+                        <span class="sets-score">{{ cell.sets_score }}</span>
+                      </div>
+                    {% elif cell.status == 'P' %}
+                      <div class="cell-content">
+                        <span class="result-icon">⏱</span>
+                        <span class="sets-score">{{ cell.sets_score }}</span>
+                      </div>
+                    {% elif cell.status == '—' %}
+                      <div class="cell-content">
+                        <span class="result-icon">—</span>
+                      </div>
+                    {% else %}
+                      <div class="cell-content">
+                        <span class="add-match-icon">+</span>
+                      </div>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+    
+    <h2>⚔️ Матчи</h2>
+    <div class="matches-section">
+      <button class="toggle-matches-btn" onclick="toggleMatches()" id="toggleMatchesBtn">
+        <span class="toggle-icon">📖</span>
+        <span class="toggle-text">Развернуть список матчей</span>
+      </button>
+      <div class="matches-list" id="matchesList" style="display: none;">
+        {% for m in matches %}
+          <div class="match-item">
+            <div class="match-header">
+              <div class="match-round">Раунд {{ m.round_number }}</div>
+              <div class="player-names">{{ m.player1.full_name }} vs {{ m.player2.full_name }}</div>
+            </div>
+            <div class="match-score">
+              <div class="sets-score">{{ m.sets_player1 }} - {{ m.sets_player2 }}</div>
+              {% if m.winner %}
+                <div class="winner-badge">{{ m.winner.full_name }}</div>
+              {% else %}
+                <div class="match-status">В процессе</div>
+              {% endif %}
+            </div>
+            {% if not m.winner %}
+              <div class="match-actions">
+                <a class="btn primary" href="{% url 'tennis_app:play_match_live' m.id %}">🎮 Начать матч</a>
+                <a class="btn secondary" href="{% url 'tennis_app:report_match_result' m.id %}">📝 Ввести результат</a>
+              </div>
+            {% endif %}
+          </div>
+        {% empty %}
+          <div class="match-item">
+            <p style="margin: 0; text-align: center; color: var(--text-muted);">Матчей пока нет</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <h3>➕ Новый матч</h3>
+    <div class="content">
+      <form method="post" style="margin-bottom:1rem;">{% csrf_token %}
+        {{ match_form.as_p }}
+        <button type="submit" name="create_match" value="1" class="btn success">Создать матч</button>
+      </form>
+    </div>
+    <a class="btn outline" href="{% url 'tennis_app:club_detail' tournament.club.id %}">← Назад к клубу</a>
+  </div>
+
+<!-- Модальное окно для создания матча -->
+<div id="matchModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Создать матч</h3>
+      <span class="close" onclick="closeMatchModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p id="matchPlayers"></p>
+      <form id="createMatchForm" method="post">
+        {% csrf_token %}
+        <input type="hidden" id="modalPlayer1" name="player1" value="">
+        <input type="hidden" id="modalPlayer2" name="player2" value="">
+        <input type="hidden" name="create_match" value="1">
+        <div class="modal-actions">
+          <button type="submit" class="btn success">Создать матч</button>
+          <button type="button" class="btn outline" onclick="closeMatchModal()">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Стили для матрицы результатов */
+.matrix-cell {
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  vertical-align: middle;
+  transition: var(--transition);
+  min-width: 60px;
+  height: 50px;
+  padding: 4px;
+}
+
+.matrix-cell:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  transform: scale(1.05);
+}
+
+.cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 2px;
+}
+
+.cell-win {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  font-weight: bold;
+}
+
+.cell-loss {
+  background: linear-gradient(135deg, #ff7f50 0%, #ffa500 100%);
+  color: white;
+  font-weight: bold;
+}
+
+.cell-progress {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(67, 233, 123, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(67, 233, 123, 0.8), 0 0 30px rgba(67, 233, 123, 0.4);
+  }
+}
+
+.cell-progress:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+  animation: none;
+}
+
+.cell-progress::after {
+  content: 'Кликните чтобы начать матч';
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.cell-progress:hover::after {
+  opacity: 1;
+}
+
+.cell-self {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.cell-self:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+.cell-empty {
+  background: rgba(102, 126, 234, 0.1);
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+}
+
+.cell-empty:hover {
+  border-color: rgba(102, 126, 234, 0.6);
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.cell-empty::after {
+  content: 'Кликните чтобы создать матч';
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.cell-empty:hover::after {
+  opacity: 1;
+}
+
+.result-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.sets-score {
+  font-size: 14px;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  min-width: 30px;
+  display: inline-block;
+  text-align: center;
+}
+
+.add-match-icon {
+  font-size: 20px;
+  color: rgba(102, 126, 234, 0.7);
+  font-weight: bold;
+}
+
+/* Стили для сворачивания матчей */
+.matches-section {
+  margin-bottom: 2rem;
+}
+
+.toggle-matches-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.toggle-matches-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.toggle-matches-btn.expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.matches-list {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.matches-list.show {
+  display: block !important;
+}
+
+/* Модальное окно */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  margin: 15% auto;
+  padding: 0;
+  border-radius: var(--radius-xl);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.close {
+  color: var(--text-muted);
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  transition: var(--transition);
+}
+
+.close:hover {
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  max-width: 150px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .matrix-cell {
+    min-width: 50px;
+    height: 50px;
+    font-size: 12px;
+  }
+  
+  .sets-score {
+    font-size: 12px;
+    padding: 1px 4px;
+    min-width: 25px;
+  }
+  
+  .add-match-icon {
+    font-size: 18px;
+  }
+  
+  .result-icon {
+    font-size: 14px;
+  }
+  
+  .cell-progress::after {
+    font-size: 8px;
+    bottom: -20px;
+    padding: 2px 4px;
+  }
+  
+  .modal-content {
+    margin: 10% auto;
+    width: 95%;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions .btn {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .matrix-cell {
+    min-width: 40px;
+    height: 40px;
+    font-size: 10px;
+  }
+  
+  .sets-score {
+    font-size: 10px;
+    padding: 1px 3px;
+    min-width: 20px;
+  }
+  
+  .add-match-icon {
+    font-size: 16px;
+  }
+  
+  .result-icon {
+    font-size: 12px;
+  }
+}
+</style>
+
+<!-- JSON данные для JavaScript -->
+<script id="players-data" type="application/json">
+{
+  {% for participant in participants %}
+    "{{ participant.player.id }}": "{{ participant.player.full_name }}"{% if not forloop.last %},{% endif %}
+  {% endfor %}
+}
+</script>
+
+<script src="{% static 'js/tournament_detail.js' %}"></script>
+{% endblock %}

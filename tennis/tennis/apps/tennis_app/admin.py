@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Club, ClubMembership, ClubAdmin, Player, Tournament,
-    Match, Game, FriendlyGame, Point, Standing, ClubEvent
+    Match, Game, FriendlyGame, Point, Standing, ClubEvent,
+    TournamentParticipant, ClubAdminInvite
 )
 
 
@@ -33,9 +34,23 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
-    list_display = ("name", "club", "start_date", "is_round_robin")
-    list_filter = ("club", "is_round_robin")
+    list_display = ("name", "club", "start_date", "tournament_type")
+    list_filter = ("club", "tournament_type")
     search_fields = ("name", "club__name")
+
+
+@admin.register(TournamentParticipant)
+class TournamentParticipantAdmin(admin.ModelAdmin):
+    list_display = ("tournament", "player", "seed", "joined_at")
+    list_filter = ("tournament",)
+    search_fields = ("player__full_name", "tournament__name")
+
+
+@admin.register(ClubAdminInvite)
+class ClubAdminInviteAdmin(admin.ModelAdmin):
+    list_display = ("club", "email", "is_active", "created_at", "expires_at", "accepted_at")
+    list_filter = ("club", "is_active")
+    search_fields = ("email", "club__name")
 
 
 @admin.register(Match)

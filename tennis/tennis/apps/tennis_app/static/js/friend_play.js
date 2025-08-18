@@ -8,10 +8,31 @@ function startGame() {
     const player1Name = document.getElementById('player1').value;
     const player2Name = document.getElementById('player2').value;
 
+    if (!player1Name || !player2Name) {
+        alert('Пожалуйста, выберите игроков');
+        return;
+    }
+
+    if (player1Name === player2Name) {
+        alert('Выберите разных игроков');
+        return;
+    }
+
     document.getElementById('name1').innerText = player1Name;
     document.getElementById('name2').innerText = player2Name;
-    document.getElementById('game').style.display = 'block';
-    document.getElementById('setup').style.display = 'none';
+    
+    // Добавляем анимации
+    const setupDiv = document.getElementById('setup');
+    const gameDiv = document.getElementById('game');
+    
+    setupDiv.classList.add('fade-out');
+    
+    setTimeout(() => {
+        setupDiv.style.display = 'none';
+        gameDiv.style.display = 'block';
+        gameDiv.classList.add('fade-in');
+    }, 400);
+    
     document.getElementById('finishGameBtn').style.display = 'inline-block';
 
     score = [0, 0];
@@ -68,8 +89,20 @@ function resetGame() {
     document.getElementById('score2').innerText = '0';
     document.getElementById('turn').innerText = '';
     document.getElementById('winner').innerText = '';
-    document.getElementById('game').style.display = 'none';
-    document.getElementById('setup').style.display = 'block';
+    
+    // Добавляем анимации
+    const setupDiv = document.getElementById('setup');
+    const gameDiv = document.getElementById('game');
+    
+    gameDiv.classList.add('fade-out');
+    
+    setTimeout(() => {
+        gameDiv.style.display = 'none';
+        gameDiv.classList.remove('fade-out', 'fade-in');
+        setupDiv.style.display = 'block';
+        setupDiv.classList.remove('fade-out');
+    }, 400);
+    
     gameOver = false;
     document.getElementById('btnAdd1').disabled = false;
     document.getElementById('btnAdd2').disabled = false;
