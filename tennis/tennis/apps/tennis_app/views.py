@@ -35,6 +35,10 @@ def my_tournaments(request):
 def rules(request):
     return render(request, 'rules.html')
 
+def settings_view(request):
+    """Страница настроек интерфейса"""
+    return render(request, 'settings.html')
+
 def friend_play(request):
     user = request.user
     club_ids = Club.objects.filter(clubmembership__user=user, clubmembership__is_active=True).values_list('id', flat=True)

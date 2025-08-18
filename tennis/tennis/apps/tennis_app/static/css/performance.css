@@ -1,0 +1,108 @@
+/* Дополнительные оптимизации производительности */
+
+/* Принудительное использование GPU для критических элементов */
+.container,
+.player,
+.btn,
+button {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Оптимизация репейнтинга для анимированных элементов */
+.player.active,
+.winner,
+.match-item:hover {
+    contain: layout style paint;
+}
+
+/* Ускорение скроллинга на мобильных */
+.nav-links,
+.page-wrapper {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Оптимизация рендеринга текста */
+body {
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* Предотвращение ненужных перерисовок */
+.theme-toggle,
+.performance-toggle {
+    contain: strict;
+}
+
+/* ===== ПЕРЕКЛЮЧАТЕЛЬ ПРОИЗВОДИТЕЛЬНОСТИ (СКРЫТ - ПЕРЕМЕЩЕН В НАСТРОЙКИ) ===== */
+.performance-toggle {
+    display: none !important; /* Переключатель перемещен в настройки */
+}
+
+/* Критические CSS для первой отрисовки */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    body::before,
+    body::after {
+        display: none !important;
+    }
+}
+
+/* Оптимизация для слабых устройств */
+@media (max-width: 480px) {
+    body::before,
+    body::after {
+        opacity: 0.2;
+        filter: none;
+    }
+    
+    .container {
+        backdrop-filter: blur(5px);
+    }
+    
+    /* Упрощение теней на мобильных */
+    .container,
+    .content,
+    .match-item {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+}
+
+/* Оптимизация для старых браузеров */
+@supports not (backdrop-filter: blur(1px)) {
+    .container,
+    .content,
+    .nav-links {
+        background: var(--bg-primary);
+        backdrop-filter: none;
+    }
+}
+
+/* Принудительное ускорение для ключевых анимаций */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 30px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes activePlayerGlow {
+    0%, 100% { 
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        transform: translate3d(0, 0, 0) scale(1.02);
+    }
+    50% { 
+        box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.3);
+        transform: translate3d(0, 0, 0) scale(1.02);
+    }
+}

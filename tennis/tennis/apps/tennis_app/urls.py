@@ -8,6 +8,7 @@ urlpatterns = [
     path('demo_play', views.demo_play, name='demo_play'),
     path('my_tournaments', views.my_tournaments, name='my_tournaments'),
     path('rules', views.rules, name='rules'),
+    path('settings', views.settings_view, name='settings'),
     path('auth/', views.login_register_view, name='login_register'),
     path('logout/', views.logout_view, name='logout'),
     path('club/', views.my_club, name='my_club'),

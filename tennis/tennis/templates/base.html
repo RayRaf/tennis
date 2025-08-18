@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/performance.css' %}">
+  <link rel="stylesheet" href="{% static 'css/settings.css' %}">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -30,6 +32,7 @@
         {% else %}
           <li><a href="{% url 'tennis_app:login_register' %}"><span>🔐 Войти</span></a></li>
         {% endif %}
+          <li><a href="{% url 'tennis_app:settings' %}"><span>⚙️Настройки</span></a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" onclick="window.UI.toggleTheme()" aria-label="Переключить тему" title="Переключить тему"></button>
@@ -49,6 +52,7 @@
   </main>
   <footer class="site-footer">© {% now 'Y' %} TT Arena</footer>
   <script src="{% static 'js/ui.js' %}"></script>
+  <script src="{% static 'js/performance-monitor.js' %}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>
