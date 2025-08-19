@@ -96,30 +96,38 @@
                     
                     <!-- Кнопки управления очками -->
                     <div class="control-buttons-section">
-                        <!-- Для десктопа - старый дизайн -->
-                        <div class="point-controls desktop-controls">
-                            <button class="btn-point add-point" data-action="p1" data-player="{{ match.player1.full_name }}">
-                                <span class="btn-icon">+</span>
-                                <span class="btn-text">{{ match.player1.full_name }}</span>
-                            </button>
-                            <button class="btn-point add-point" data-action="p2" data-player="{{ match.player2.full_name }}">
-                                <span class="btn-icon">+</span>
-                                <span class="btn-text">{{ match.player2.full_name }}</span>
-                            </button>
-                        </div>
-                        
-                        <div class="undo-controls desktop-controls">
-                            <button class="btn-undo undo-point" data-action="undo_p1" data-player="{{ match.player1.full_name }}">
-                                <span class="btn-icon">↶</span>
-                                <span class="btn-text">Отменить</span>
-                            </button>
-                            <button class="btn-undo undo-point" data-action="undo_p2" data-player="{{ match.player2.full_name }}">
-                                <span class="btn-icon">↶</span>
-                                <span class="btn-text">Отменить</span>
-                            </button>
+                        <!-- Для десктопа - новый унифицированный дизайн -->
+                        <div class="desktop-score-controls">
+                            <!-- Игрок 1 -->
+                            <div class="player-score-row">
+                                <button class="btn-desktop-undo undo-point" data-action="undo_p1" data-player="{{ match.player1.full_name }}">
+                                    <span class="btn-icon">−</span>
+                                </button>
+                                <div class="desktop-score-display">
+                                    <span class="desktop-player-name">{{ match.player1.full_name }}</span>
+                                    <span class="desktop-current-score" id="desktop-score-p1">{{ score.0 }}</span>
+                                </div>
+                                <button class="btn-desktop-add add-point" data-action="p1" data-player="{{ match.player1.full_name }}">
+                                    <span class="btn-icon">+</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Игрок 2 -->
+                            <div class="player-score-row">
+                                <button class="btn-desktop-undo undo-point" data-action="undo_p2" data-player="{{ match.player2.full_name }}">
+                                    <span class="btn-icon">−</span>
+                                </button>
+                                <div class="desktop-score-display">
+                                    <span class="desktop-player-name">{{ match.player2.full_name }}</span>
+                                    <span class="desktop-current-score" id="desktop-score-p2">{{ score.1 }}</span>
+                                </div>
+                                <button class="btn-desktop-add add-point" data-action="p2" data-player="{{ match.player2.full_name }}">
+                                    <span class="btn-icon">+</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Для мобильных - новый дизайн -->
+                        <!-- Для мобильных -->
                         <div class="mobile-score-controls">
                             <!-- Мобильный индикатор подачи -->
                             <div class="mobile-serve-indicator" id="mobileServeIndicator">
@@ -1525,6 +1533,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const scoreP2 = document.getElementById('score-p2');
             const mobileScoreP1 = document.getElementById('mobile-score-p1');
             const mobileScoreP2 = document.getElementById('mobile-score-p2');
+            const desktopScoreP1 = document.getElementById('desktop-score-p1');
+            const desktopScoreP2 = document.getElementById('desktop-score-p2');
             
             if (scoreP1) scoreP1.textContent = data.score[0];
             if (scoreP2) scoreP2.textContent = data.score[1];
@@ -1538,6 +1548,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileScoreP2.textContent = data.score[1];
                 mobileScoreP2.classList.add('score-updated');
                 setTimeout(() => mobileScoreP2.classList.remove('score-updated'), 500);
+            }
+            
+            if (desktopScoreP1) {
+                desktopScoreP1.textContent = data.score[0];
+                desktopScoreP1.classList.add('score-updated');
+                setTimeout(() => desktopScoreP1.classList.remove('score-updated'), 500);
+            }
+            if (desktopScoreP2) {
+                desktopScoreP2.textContent = data.score[1];
+                desktopScoreP2.classList.add('score-updated');
+                setTimeout(() => desktopScoreP2.classList.remove('score-updated'), 500);
             }
             
             // Обновляем индикатор подачи

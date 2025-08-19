@@ -1,6 +1,70 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Демо игра{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Принудительные стили для горизонтального расположения кнопок */
+.demo-player-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    margin: 1.5rem auto !important;
+    width: 100% !important;
+    max-width: 600px !important;
+}
+
+/* Кнопки и их расположение */
+.demo-player-container button:hover {
+    transform: translateY(-2px) scale(1.05) !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+    .demo-player-container {
+        max-width: 100% !important;
+        margin: 1rem auto !important;
+        gap: 0.75rem !important;
+    }
+    
+    .demo-player-container button {
+        min-width: 3.5rem !important;
+        height: 3.5rem !important;
+        font-size: 1.25rem !important;
+    }
+    
+    .demo-player-container .player {
+        font-size: 1rem !important;
+        padding: 1rem 0.5rem !important;
+        margin: 0 0.5rem !important;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+    .demo-player-container {
+        gap: 0.5rem !important;
+        margin: 1rem auto !important;
+    }
+    
+    .demo-player-container button {
+        min-width: 3rem !important;
+        height: 3rem !important;
+        font-size: 1.1rem !important;
+    }
+    
+    .demo-player-container .player {
+        font-size: 0.9rem !important;
+        padding: 0.75rem 0.25rem !important;
+        margin: 0 0.25rem !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
     <h1>Демо: Настольный теннис</h1>
     <div class="container">
@@ -10,19 +74,19 @@
             <button onclick="startGame()" class="primary">🚀 Начать игру</button>
         </div>
         <div id="game" style="display:none;">
-            <div class="player-container">
-                <button id="btnRemove1" onclick="removePoint(1)">➖</button>
-                <div id="p1" class="player">
+            <div class="demo-player-container" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 1rem; margin: 1.5rem auto; max-width: 600px; width: 100%;">
+                <button id="btnRemove1" onclick="removePoint(1)" style="order: 1; min-width: 4rem; height: 4rem; border-radius: 50%; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-shrink: 0;">➖</button>
+                <div id="p1" class="player" style="order: 2; flex: 1; text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 16px; font-size: 1.25rem; font-weight: 600; margin: 0 1rem;">
                     <span id="name1"></span>: <span class="score" id="score1">0</span>
                 </div>
-                <button id="btnAdd1" onclick="addPoint(1)">➕</button>
+                <button id="btnAdd1" onclick="addPoint(1)" style="order: 3; min-width: 4rem; height: 4rem; border-radius: 50%; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-shrink: 0;">➕</button>
             </div>
-            <div class="player-container">
-                <button id="btnRemove2" onclick="removePoint(2)">➖</button>
-                <div id="p2" class="player">
+            <div class="demo-player-container" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 1rem; margin: 1.5rem auto; max-width: 600px; width: 100%;">
+                <button id="btnRemove2" onclick="removePoint(2)" style="order: 1; min-width: 4rem; height: 4rem; border-radius: 50%; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #ff6b6b, #ffa500); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-shrink: 0;">➖</button>
+                <div id="p2" class="player" style="order: 2; flex: 1; text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 16px; font-size: 1.25rem; font-weight: 600; margin: 0 1rem;">
                     <span id="name2"></span>: <span class="score" id="score2">0</span>
                 </div>
-                <button id="btnAdd2" onclick="addPoint(2)">➕</button>
+                <button id="btnAdd2" onclick="addPoint(2)" style="order: 3; min-width: 4rem; height: 4rem; border-radius: 50%; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-shrink: 0;">➕</button>
             </div>
             <p id="turn"></p>
             <p id="winner"></p>
@@ -30,4 +94,5 @@
         </div>
     </div>
 {% endblock %}
+
 {% block extra_js %}<script src="{% static 'js/play.js' %}"></script>{% endblock %}

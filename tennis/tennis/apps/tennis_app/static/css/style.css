@@ -1378,6 +1378,7 @@ input[type="hidden"] {
     color: white;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
     font-weight: 800;
+    order: 3; /* Размещаем справа */
 }
 
 .player-container button[onclick*="addPoint"]:hover {
@@ -1392,12 +1393,279 @@ input[type="hidden"] {
     color: white;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
     font-weight: 800;
+    order: 1; /* Размещаем слева */
 }
 
 .player-container button[onclick*="removePoint"]:hover {
     background: linear-gradient(135deg, #ff7f50 0%, #ffa500 100%);
     box-shadow: 0 0 20px rgba(255, 127, 80, 0.4), var(--shadow-xl);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* Обновляем порядок элементов в контейнере игрока */
+.player-container .player {
+    order: 2; /* Размещаем посередине */
+}
+
+/* === Унифицированные стили для кнопок очков === */
+
+/* Базовые стили для строк счетчиков очков */
+.player-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+[data-theme="dark"] .player-score-row {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Контейнеры для десктопных и мобильных управляющих элементов */
+.desktop-score-controls {
+    display: block;
+}
+
+.mobile-score-controls {
+    display: none;
+}
+
+/* Дисплеи счета */
+.desktop-score-display, .mobile-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem 1rem;
+}
+
+.desktop-player-name, .mobile-player-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.desktop-current-score, .mobile-current-score {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #667eea;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Унифицированные стили кнопок */
+.btn-desktop-add, .btn-desktop-undo, 
+.btn-mobile-add, .btn-mobile-undo {
+    min-width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    box-shadow: var(--shadow-md);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+/* Кнопки плюс */
+.btn-desktop-add, .btn-mobile-add {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-desktop-add:hover, .btn-mobile-add:hover {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 20px rgba(67, 233, 123, 0.4), var(--shadow-lg);
+}
+
+.btn-desktop-add:active, .btn-mobile-add:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Кнопки минус */
+.btn-desktop-undo, .btn-mobile-undo {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-desktop-undo:hover, .btn-mobile-undo:hover {
+    background: linear-gradient(135deg, #ff7f50 0%, #ffa500 100%);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 127, 80, 0.4), var(--shadow-lg);
+}
+
+.btn-desktop-undo:active, .btn-mobile-undo:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Подсветка активного игрока */
+.player-score-row.active-player {
+    border-color: rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2), var(--shadow-md);
+    transform: scale(1.02);
+    animation: activePlayerPulse 2s ease-in-out infinite;
+}
+
+@keyframes activePlayerPulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2), var(--shadow-md);
+    }
+    50% { 
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3), 0 0 16px rgba(102, 126, 234, 0.2), var(--shadow-md);
+    }
+}
+
+[data-theme="dark"] .player-score-row.active-player {
+    border-color: rgba(139, 157, 232, 0.4);
+    background: linear-gradient(135deg, rgba(139, 157, 232, 0.15), rgba(157, 123, 219, 0.15));
+    box-shadow: 0 0 0 2px rgba(139, 157, 232, 0.3), var(--shadow-md);
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+    .desktop-score-controls {
+        display: none;
+    }
+    
+    .mobile-score-controls {
+        display: block;
+    }
+    
+    .player-score-row {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .mobile-player-name {
+        font-size: 0.8rem;
+        max-width: 100px;
+    }
+    
+    .mobile-current-score {
+        font-size: 1.75rem;
+    }
+    
+    .btn-mobile-add, .btn-mobile-undo {
+        min-width: 3rem;
+        height: 3rem;
+        font-size: 1.25rem;
+    }
+    
+    /* Адаптируем старые кнопки для мобильных */
+    .player-container {
+        gap: 0.75rem;
+        margin: 1rem 0;
+        padding: 0.75rem;
+    }
+    
+    .player-container button {
+        min-width: 3rem;
+        height: 3rem;
+        font-size: 1.25rem;
+    }
+}
+
+/* Мобильный индикатор подачи */
+.mobile-serve-indicator {
+    text-align: center;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .mobile-serve-indicator {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.serve-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.deuce-indicator {
+    margin-top: 0.5rem;
+}
+
+.deuce-text {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #ff6b6b, #ffa500);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+/* Анимация обновления счета */
+.score-updated {
+    animation: scoreUpdate 0.5s ease-out;
+}
+
+@keyframes scoreUpdate {
+    0% { 
+        transform: scale(1);
+        background: transparent;
+    }
+    25% { 
+        transform: scale(1.15);
+        background: rgba(102, 126, 234, 0.2);
+        border-radius: 8px;
+    }
+    75% { 
+        transform: scale(1.05);
+        background: rgba(102, 126, 234, 0.1);
+    }
+    100% { 
+        transform: scale(1);
+        background: transparent;
+    }
 }
 
 /* Content areas */
