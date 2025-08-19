@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Django: Runserver",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tennis/manage.py",
+            "args": [
+                "runserver",
+                "localhost:8000"
+            ],
+            "django": true,
+            "console": "integratedTerminal",
+            "env": {},
+            "python": "C:/source/tennis/tennis/venv/Scripts/python.exe"
+        }
+    ]
+}

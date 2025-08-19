@@ -96,7 +96,8 @@
                     
                     <!-- Кнопки управления очками -->
                     <div class="control-buttons-section">
-                        <div class="point-controls">
+                        <!-- Для десктопа - старый дизайн -->
+                        <div class="point-controls desktop-controls">
                             <button class="btn-point add-point" data-action="p1" data-player="{{ match.player1.full_name }}">
                                 <span class="btn-icon">+</span>
                                 <span class="btn-text">{{ match.player1.full_name }}</span>
@@ -107,7 +108,7 @@
                             </button>
                         </div>
                         
-                        <div class="undo-controls">
+                        <div class="undo-controls desktop-controls">
                             <button class="btn-undo undo-point" data-action="undo_p1" data-player="{{ match.player1.full_name }}">
                                 <span class="btn-icon">↶</span>
                                 <span class="btn-text">Отменить</span>
@@ -116,6 +117,51 @@
                                 <span class="btn-icon">↶</span>
                                 <span class="btn-text">Отменить</span>
                             </button>
+                        </div>
+
+                        <!-- Для мобильных - новый дизайн -->
+                        <div class="mobile-score-controls">
+                            <!-- Мобильный индикатор подачи -->
+                            <div class="mobile-serve-indicator" id="mobileServeIndicator">
+                                {% with server=score|tennis_server:current_game.first_server %}
+                                    {% if server == 1 %}
+                                        <span class="serve-text">🏓 Подает: {{ match.player1.full_name }}</span>
+                                    {% else %}
+                                        <span class="serve-text">🏓 Подает: {{ match.player2.full_name }}</span>
+                                    {% endif %}
+                                {% endwith %}
+                                {% if score|is_deuce %}
+                                    <div class="deuce-indicator">
+                                        <span class="deuce-text">⚡ ДЕЙС</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="player-score-row">
+                                <button class="btn-mobile-undo undo-point" data-action="undo_p1" data-player="{{ match.player1.full_name }}">
+                                    <span class="btn-icon">−</span>
+                                </button>
+                                <div class="mobile-score-display">
+                                    <span class="mobile-player-name">{{ match.player1.full_name }}</span>
+                                    <span class="mobile-current-score" id="mobile-score-p1">{{ score.0 }}</span>
+                                </div>
+                                <button class="btn-mobile-add add-point" data-action="p1" data-player="{{ match.player1.full_name }}">
+                                    <span class="btn-icon">+</span>
+                                </button>
+                            </div>
+                            
+                            <div class="player-score-row">
+                                <button class="btn-mobile-undo undo-point" data-action="undo_p2" data-player="{{ match.player2.full_name }}">
+                                    <span class="btn-icon">−</span>
+                                </button>
+                                <div class="mobile-score-display">
+                                    <span class="mobile-player-name">{{ match.player2.full_name }}</span>
+                                    <span class="mobile-current-score" id="mobile-score-p2">{{ score.1 }}</span>
+                                </div>
+                                <button class="btn-mobile-add add-point" data-action="p2" data-player="{{ match.player2.full_name }}">
+                                    <span class="btn-icon">+</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -649,6 +695,153 @@
     transform: translateY(0);
 }
 
+/* Мобильные элементы управления счетом */
+.mobile-score-controls {
+    display: none;
+}
+
+.desktop-controls {
+    display: block;
+}
+
+.mobile-serve-indicator {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 2px solid rgba(102, 126, 234, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .mobile-serve-indicator {
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.player-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 2px solid rgba(102, 126, 234, 0.15);
+    border-radius: var(--radius-xl);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+[data-theme="dark"] .player-score-row {
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.player-score-row.active-player {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), var(--shadow-lg);
+    animation: activePlayerGlow 2s ease-in-out infinite;
+}
+
+.player-score-row.active-player::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    opacity: 1;
+}
+
+.mobile-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.mobile-player-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.mobile-current-score {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--accent-primary);
+    text-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    transition: var(--transition);
+}
+
+.mobile-current-score.score-updated {
+    animation: scoreGlow 0.5s ease-in-out;
+}
+
+.btn-mobile-add,
+.btn-mobile-undo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.btn-mobile-add {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-mobile-undo {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-mobile-add::before,
+.btn-mobile-undo::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.btn-mobile-add:hover,
+.btn-mobile-undo:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-mobile-add:hover::before,
+.btn-mobile-undo:hover::before {
+    left: 100%;
+}
+
+.btn-mobile-add:active,
+.btn-mobile-undo:active {
+    transform: translateY(0) scale(1);
+}
+
 /* Выбор первого подающего */
 .server-selection {
     margin: 2rem 0;
@@ -1043,18 +1236,26 @@
     }
     
     .game-score-display {
-        flex-direction: column;
-        gap: 1rem;
+        display: none;
     }
     
     .score-separator {
         display: none;
     }
     
-    .point-controls,
-    .undo-controls {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    /* Скрываем десктопные элементы управления */
+    .desktop-controls {
+        display: none !important;
+    }
+    
+    /* Скрываем десктопный индикатор подачи */
+    .serve-indicator {
+        display: none !important;
+    }
+    
+    /* Показываем мобильные элементы управления */
+    .mobile-score-controls {
+        display: block !important;
     }
     
     .history-item {
@@ -1111,6 +1312,30 @@
     .btn-undo {
         padding: 0.75rem 1rem;
         font-size: 0.875rem;
+    }
+    
+    .mobile-current-score {
+        font-size: 2.5rem;
+    }
+    
+    .btn-mobile-add,
+    .btn-mobile-undo {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .mobile-player-name {
+        font-size: 1rem;
+    }
+}
+
+/* Медиа-запрос для экранов до 1024px (планшеты) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .point-controls,
+    .undo-controls {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }
 
@@ -1298,12 +1523,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.score && data.current_game) {
             const scoreP1 = document.getElementById('score-p1');
             const scoreP2 = document.getElementById('score-p2');
+            const mobileScoreP1 = document.getElementById('mobile-score-p1');
+            const mobileScoreP2 = document.getElementById('mobile-score-p2');
+            
             if (scoreP1) scoreP1.textContent = data.score[0];
             if (scoreP2) scoreP2.textContent = data.score[1];
             
+            if (mobileScoreP1) {
+                mobileScoreP1.textContent = data.score[0];
+                mobileScoreP1.classList.add('score-updated');
+                setTimeout(() => mobileScoreP1.classList.remove('score-updated'), 500);
+            }
+            if (mobileScoreP2) {
+                mobileScoreP2.textContent = data.score[1];
+                mobileScoreP2.classList.add('score-updated');
+                setTimeout(() => mobileScoreP2.classList.remove('score-updated'), 500);
+            }
+            
             // Обновляем индикатор подачи
             const serveIndicator = document.getElementById('serveIndicator');
-            if (serveIndicator) {
+            const mobileServeIndicator = document.getElementById('mobileServeIndicator');
+            if (serveIndicator || mobileServeIndicator) {
                 const firstServer = data.first_server || window.currentFirstServer || 1;
                 const servingPlayer = getServerPlayer(data.score[0], data.score[1], data.player1_name, data.player2_name, firstServer);
                 
@@ -1318,7 +1558,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
                 
-                serveIndicator.innerHTML = indicatorHTML;
+                if (serveIndicator) {
+                    serveIndicator.innerHTML = indicatorHTML;
+                }
+                if (mobileServeIndicator) {
+                    mobileServeIndicator.innerHTML = indicatorHTML;
+                }
             }
             
             // Обновляем подсветку активного игрока
@@ -1419,12 +1664,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const firstServer = window.currentFirstServer || 1;
             const servingPlayer = getServerPlayer(score1, score2, player1Name, player2Name, firstServer);
             
+            // Обновляем мобильные элементы
+            const mobileScoreRows = document.querySelectorAll('.player-score-row');
+            
             if (servingPlayer === player1Name) {
                 player1Info.classList.add('active');
                 player2Info.classList.remove('active');
+                
+                // Подсвечиваем мобильную строку первого игрока
+                if (mobileScoreRows[0]) {
+                    mobileScoreRows[0].classList.add('active-player');
+                }
+                if (mobileScoreRows[1]) {
+                    mobileScoreRows[1].classList.remove('active-player');
+                }
             } else {
                 player1Info.classList.remove('active');
                 player2Info.classList.add('active');
+                
+                // Подсвечиваем мобильную строку второго игрока
+                if (mobileScoreRows[0]) {
+                    mobileScoreRows[0].classList.remove('active-player');
+                }
+                if (mobileScoreRows[1]) {
+                    mobileScoreRows[1].classList.add('active-player');
+                }
             }
         }
     }

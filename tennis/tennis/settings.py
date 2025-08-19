@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
     'https://tennis.astrolis.ru',
     'https://successfully-nonchalant-mayfly.cloudpub.ru',
+    'https://variously-growing-fennec.cloudpub.ru',
 ]
 
 
