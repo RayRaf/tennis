@@ -35,10 +35,10 @@
           <li><a href="{% url 'tennis_app:settings' %}"><span>⚙️Настройки</span></a></li>
       </ul>
       <div class="nav-actions">
-        <button class="theme-toggle" onclick="window.UI.toggleTheme()" aria-label="Переключить тему" title="Переключить тему"></button>
         {% if user.is_authenticated %}<span class="user-chip" title="Профиль">{{ user.username }}</span>{% endif %}
       </div>
     </nav>
+    <div class="nav-overlay" id="navOverlay" onclick="window.UI.toggleMenu()"></div>
   </header>
   <main class="page-wrapper">
     {% if messages %}

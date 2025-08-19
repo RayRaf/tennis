@@ -221,9 +221,24 @@ window.UI = (function() {
     const toggleMenu = () => {
         const nav = document.getElementById('navLinks');
         const toggle = document.querySelector('.nav-toggle');
+        const overlay = document.getElementById('navOverlay');
+        
         if (nav) {
-            nav.classList.toggle('show');
-            if (toggle) toggle.classList.toggle('active');
+            const isOpen = nav.classList.contains('show');
+            
+            if (isOpen) {
+                // Закрываем меню
+                nav.classList.remove('show');
+                if (toggle) toggle.classList.remove('active');
+                if (overlay) overlay.classList.remove('show');
+                document.body.style.overflow = '';
+            } else {
+                // Открываем меню
+                nav.classList.add('show');
+                if (toggle) toggle.classList.add('active');
+                if (overlay) overlay.classList.add('show');
+                document.body.style.overflow = 'hidden'; // Предотвращаем скролл
+            }
         }
     };
 
@@ -319,14 +334,65 @@ window.UI = (function() {
         }, 3000);
     };
 
+    // Navbar scroll effect
+    const handleScroll = () => {
+        const header = document.querySelector('.site-header');
+        if (header) {
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+    };
+
+    // Initialize scroll listener
+    const initScrollEffects = () => {
+        if (performanceMode !== 'performance') {
+            window.addEventListener('scroll', handleScroll, { passive: true });
+        }
+    };
+
+    // Escape key handler for mobile menu
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            const nav = document.getElementById('navLinks');
+            if (nav && nav.classList.contains('show')) {
+                toggleMenu();
+            }
+        }
+    };
+
+    // Highlight active menu item
+    const highlightActiveMenuItem = () => {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-links a');
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            const linkPath = new URL(link.href).pathname;
+            
+            if (currentPath === linkPath || 
+                (currentPath.startsWith(linkPath) && linkPath !== '/')) {
+                link.classList.add('active');
+            }
+        });
+    };
+
     // Auto-initialize when DOM is loaded
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            initScrollEffects();
+            highlightActiveMenuItem();
+            document.addEventListener('keydown', handleEscape);
             // Performance toggle moved to settings page
         });
     } else {
         initTheme();
+        initScrollEffects();
+        highlightActiveMenuItem();
+        document.addEventListener('keydown', handleEscape);
         // Performance toggle moved to settings page
     }
 
