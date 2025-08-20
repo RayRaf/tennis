@@ -70,21 +70,70 @@
     <div class="container">
         {% if not is_tournament %}
         <div id="setup">
-            <label>Игрок 1:
-                <select id="player1">
-                    {% for player in players %}
-                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label>Игрок 2:
-                <select id="player2">
-                    {% for player in players %}
-                        <option value="{{ player.full_name }}">{{ player.full_name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <button onclick="startGame()">Начать игру</button>
+            <fieldset class="match-type-group" style="margin-bottom:1rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;padding:0.75rem 1rem;border:1px solid rgba(255,255,255,0.3);border-radius:12px;">
+                <legend style="padding:0 0.5rem;font-size:0.9rem;letter-spacing:.5px;">Тип матча</legend>
+                <label style="display:flex;align-items:center;gap:.4rem;font-weight:500;cursor:pointer;">
+                    <input type="radio" name="game_type" value="single" checked onchange="toggleGameType()" style="accent-color:#5d8bff;"> Одиночный
+                </label>
+                <label style="display:flex;align-items:center;gap:.4rem;font-weight:500;cursor:pointer;">
+                    <input type="radio" name="game_type" value="double" onchange="toggleGameType()" style="accent-color:#5d8bff;"> Парный
+                </label>
+            </fieldset>
+            <div id="single-selectors">
+                <label>Игрок 1:
+                    <select id="player1">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Игрок 2:
+                    <select id="player2">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <div id="double-selectors" style="display:none;">
+                <div style="margin-bottom:0.5rem;font-weight:600;">Команда 1</div>
+                <label>Игрок 1:
+                    <select id="team1_player1">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Игрок 2:
+                    <select id="team1_player2">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div style="margin:0.75rem 0 0.5rem;font-weight:600;">Команда 2</div>
+                <label>Игрок 1:
+                    <select id="team2_player1">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Игрок 2:
+                    <select id="team2_player2">
+                        <option value="">--</option>
+                        {% for player in players %}
+                            <option value="{{ player.full_name }}">{{ player.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <button onclick="startGame()" style="margin-top:1rem;">Начать игру</button>
         </div>
         {% endif %}
     <div id="game" {% if is_tournament %}style="display:block;"{% else %}style="display:none;"{% endif %}>
@@ -118,8 +167,8 @@
 {% endblock %}
 {% block extra_js %}
 {% if is_tournament %}
-<script src="{% static 'js/play.js' %}"></script>
+<script defer src="{% static 'js/play.js' %}?v=2"></script>
 {% else %}
-<script src="{% static 'js/friend_play.js' %}"></script>
+<script defer src="{% static 'js/friend_play.js' %}?v=2"></script>
 {% endif %}
 {% endblock %}

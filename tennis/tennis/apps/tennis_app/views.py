@@ -638,30 +638,54 @@ from .models import Game
 def save_friendly_game(request):
     if request.method == "POST":
         data = json.loads(request.body)
-
-        name1 = data.get("player1")
-        name2 = data.get("player2")
-        winner_name = data.get("winner")
+        game_type = data.get("game_type", "single")
         score1 = data.get("score1", 0)
         score2 = data.get("score2", 0)
         start_time = data.get("start_time")
         end_time = data.get("end_time")
 
         def get_or_create_player(name):
+            if not name:
+                return None
             player, _ = Player.objects.get_or_create(full_name=name, defaults={'club': None, 'rating': 1000})
             return player
 
-        player1 = get_or_create_player(name1)
-        player2 = get_or_create_player(name2)
-        winner = player1 if name1 == winner_name else player2
-
-        game_obj = FriendlyGame.objects.create(
-            player1=player1,
-            player2=player2,
-            winner=winner,
-            club=player1.club if player1.club == player2.club else None,
-            played_at=end_time
-        )
+        if game_type == 'single':
+            name1 = data.get("player1")
+            name2 = data.get("player2")
+            winner_name = data.get("winner")
+            player1 = get_or_create_player(name1)
+            player2 = get_or_create_player(name2)
+            winner = player1 if name1 == winner_name else player2
+            game_obj = FriendlyGame.objects.create(
+                game_type='single',
+                player1=player1,
+                player2=player2,
+                winner=winner,
+                club=player1.club if (player1 and player2 and player1.club == player2.club) else None,
+                played_at=end_time
+            )
+        else:  # double
+            t1p1 = get_or_create_player(data.get("team1_player1"))
+            t1p2 = get_or_create_player(data.get("team1_player2"))
+            t2p1 = get_or_create_player(data.get("team2_player1"))
+            t2p2 = get_or_create_player(data.get("team2_player2"))
+            winning_team = data.get("winning_team")  # 1 или 2
+            # Определим клуб (если все игроки в одном клубе и он одинаковый)
+            clubs = {p.club for p in [t1p1, t1p2, t2p1, t2p2] if p and p.club}
+            club = clubs.pop() if len(clubs) == 1 else None
+            game_obj = FriendlyGame.objects.create(
+                game_type='double',
+                player1=t1p1,  # для совместимости оставим один слот
+                player2=t2p1,  # для совместимости
+                club=club,
+                team1_player1=t1p1,
+                team1_player2=t1p2,
+                team2_player1=t2p1,
+                team2_player2=t2p2,
+                winning_team=winning_team,
+                played_at=end_time
+            )
 
         Game.objects.create(
             friendly=game_obj,
@@ -671,5 +695,5 @@ def save_friendly_game(request):
             score_player2=score2
         )
 
-        return JsonResponse({"status": "ok"})
+        return JsonResponse({"status": "ok", "game_type": game_type})
     return JsonResponse({"error": "Invalid method"}, status=405)

@@ -58,19 +58,47 @@ class Player(models.Model):
 
     def get_stats(self):
         matches = Match.objects.filter(models.Q(player1=self) | models.Q(player2=self))
-        friendlies = FriendlyGame.objects.filter(models.Q(player1=self) | models.Q(player2=self))
+        # Одиночные товарищеские
+        friendlies_single = FriendlyGame.objects.filter(game_type='single').filter(models.Q(player1=self) | models.Q(player2=self))
+        # Парные товарищеские (искать во всех слотах команды)
+        friendlies_double = FriendlyGame.objects.filter(game_type='double').filter(
+            models.Q(team1_player1=self) | models.Q(team1_player2=self) | models.Q(team2_player1=self) | models.Q(team2_player2=self)
+        )
+        friendlies = friendlies_single.union(friendlies_double)
         match_wins = matches.filter(winner=self).count()
-        friendly_wins = friendlies.filter(winner=self).count()
+        # Победы в одиночных как раньше + победы в парных, где его команда выиграла
+        friendly_single_wins = friendlies_single.filter(winner=self).count()
+        friendly_double_wins = FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
+            (
+                (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=1)
+            ) | (
+                (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=2)
+            )
+        ).count()
+        friendly_wins = friendly_single_wins + friendly_double_wins
         total_points = Point.objects.filter(scored_by=self).count()
         games = Game.objects.filter(models.Q(match__player1=self) | models.Q(match__player2=self) |
-                                     models.Q(friendly__player1=self) | models.Q(friendly__player2=self))
+                                     models.Q(friendly__player1=self) | models.Q(friendly__player2=self) |
+                                     models.Q(friendly__team1_player1=self) | models.Q(friendly__team1_player2=self) |
+                                     models.Q(friendly__team2_player1=self) | models.Q(friendly__team2_player2=self))
         return {
             'matches': matches.count(),
-            'friendlies': friendlies.count(),
+            'friendlies': friendlies.count(),  # общее число товарищеских (single + double)
             'total_games': matches.count() + friendlies.count(),
             'total_parties': games.count(),
             'wins': match_wins + friendly_wins,
-            'losses': (matches.exclude(winner=self).count() + friendlies.exclude(winner=self).count()),
+            # Поражения: одиночные где не winner + парные где его команда проиграла
+            'losses': (
+                matches.exclude(winner=self).count() +
+                friendlies_single.exclude(winner=self).count() +
+                FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
+                    (
+                        (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=2)
+                    ) | (
+                        (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=1)
+                    )
+                ).count()
+            ),
             'scored_points': total_points
         }
 
@@ -308,13 +336,29 @@ class FriendlyGame(models.Model):
     player2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='friendlies_as_player2', verbose_name="Игрок 2", null=True, blank=True)
     winner = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='friendly_wins', verbose_name="Победитель")
     played_at = models.DateTimeField("Дата проведения", auto_now_add=True)
+    # Новые поля для парных игр
+    GAME_TYPE_CHOICES = [
+        ('single', 'Одиночная'),
+        ('double', 'Парная'),
+    ]
+    game_type = models.CharField("Тип игры", max_length=10, choices=GAME_TYPE_CHOICES, default='single')
+    # Составы команд для парной игры (необязательные, чтобы не ломать существующие данные)
+    team1_player1 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team1_p1', verbose_name="Команда 1 Игрок 1")
+    team1_player2 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team1_p2', verbose_name="Команда 1 Игрок 2")
+    team2_player1 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team2_p1', verbose_name="Команда 2 Игрок 1")
+    team2_player2 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team2_p2', verbose_name="Команда 2 Игрок 2")
+    winning_team = models.PositiveSmallIntegerField("Победившая команда", choices=[(1, 'Команда 1'), (2, 'Команда 2')], null=True, blank=True)
 
     class Meta:
         verbose_name = "Свободная игра"
         verbose_name_plural = "Свободные игры"
 
     def __str__(self):
-        return f"{self.player1} vs {self.player2 or '—'} (свободная игра)"
+        if self.game_type == 'double':
+            t1 = " / ".join([p.full_name for p in [self.team1_player1, self.team1_player2] if p]) or '—'
+            t2 = " / ".join([p.full_name for p in [self.team2_player1, self.team2_player2] if p]) or '—'
+            return f"{t1} vs {t2} (парная)"
+        return f"{self.player1} vs {self.player2 or '—'} (одиночная)"
 
 
 class Point(models.Model):
