@@ -75,7 +75,7 @@
 
     <div style="margin: 2rem 0; height: 2px; background: linear-gradient(90deg, transparent, var(--primary-gradient), transparent); border-radius: 1px;"></div>
 
-    <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
+    <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center;">
       {% if is_club_admin %}
         <a class="btn primary" href="{% url 'tennis_app:friend_play' %}?club_id={{ club.id }}">⚔️ Товарищеская партия</a>
         <a class="btn secondary" href="{% url 'tennis_app:invite_admin' club.id %}">📧 Пригласить администратора</a>
@@ -83,6 +83,9 @@
       {% if user.is_authenticated %}
         <a class="btn warning" href="{% url 'tennis_app:accept_invite' %}">📬 Принять приглашение</a>
       {% endif %}
+      <span class="admin-status-badge {% if is_club_admin %}admin-status--yes{% else %}admin-status--no{% endif %}">
+        {% if is_club_admin %}Вы администратор клуба{% else %}Вы не администратор клуба{% endif %}
+      </span>
     </div>
   </div>
 {% endblock %}

@@ -2570,3 +2570,61 @@ form {
         text-shadow: 0 2px 4px rgba(0, 0, 0, 1) !important;
     }
 }
+
+/* Admin status badge */
+.admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: var(--bg-glass);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px) saturate(160%);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    --dot-color: #ff4d4f;
+    color: var(--text-secondary);
+}
+
+.admin-status-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dot-color);
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.15), 0 0 6px var(--dot-color);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.6; }
+}
+
+.admin-status--yes {
+    --dot-color: #16c784;
+    background: linear-gradient(135deg, rgba(22,199,132,0.15), rgba(22,199,132,0.05));
+    border-color: rgba(22,199,132,0.35);
+    color: #0f5e3f;
+}
+
+[data-theme="dark"] .admin-status--yes {
+    color: #b2f5ea;
+    background: linear-gradient(135deg, rgba(22,199,132,0.25), rgba(22,199,132,0.08));
+}
+
+.admin-status--no {
+    --dot-color: #ff4d4f;
+    background: linear-gradient(135deg, rgba(255,77,79,0.12), rgba(255,77,79,0.04));
+    border-color: rgba(255,77,79,0.35);
+    color: #742a2a;
+}
+
+[data-theme="dark"] .admin-status--no {
+    color: #fed7d7;
+    background: linear-gradient(135deg, rgba(255,77,79,0.25), rgba(255,77,79,0.08));
+}

@@ -162,6 +162,10 @@ def create_club(request):
         if form.is_valid():
             club = form.save()
             ClubMembership.objects.create(user=request.user, club=club, is_active=True)
+            # Назначаем создателя администратором клуба, если ещё нет админов
+            from .models import ClubAdmin
+            if not ClubAdmin.objects.filter(club=club, user=request.user).exists():
+                ClubAdmin.objects.create(club=club, user=request.user)
             return redirect('tennis_app:club_detail', club_id=club.id)
     else:
         form = CreateClubForm()
@@ -658,6 +662,11 @@ def play_match_live(request, match_id):
 @login_required
 def invite_admin(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    # Проверка прав: только администратор клуба может приглашать других администраторов
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:club_detail', club_id=club.id)
     if request.method == 'POST':
         form = AdminInviteForm(request.POST)
         if form.is_valid():

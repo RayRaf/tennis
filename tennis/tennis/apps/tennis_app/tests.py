@@ -109,6 +109,9 @@ class MatchViewTestCase(TestCase):
         """Настройка для тестирования представлений"""
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.club = Club.objects.create(name='Test Club')
+        # Делаем пользователя администратором клуба для доступа к live-страницам
+        from .models import ClubAdmin
+        ClubAdmin.objects.create(user=self.user, club=self.club)
         self.player1 = Player.objects.create(full_name='Player 1', club=self.club)
         self.player2 = Player.objects.create(full_name='Player 2', club=self.club)
         self.tournament = Tournament.objects.create(
@@ -156,3 +159,32 @@ class InviteAcceptanceTestCase(TestCase):
         self.assertFalse(self.invite.is_active)
         self.assertTrue(ClubAdmin.objects.filter(user=self.user, club=self.club).exists())
         self.assertTrue(ClubMembership.objects.filter(user=self.user, club=self.club, is_active=True).exists())
+
+
+class MultiAdminTestCase(TestCase):
+    def setUp(self):
+        self.club = Club.objects.create(name='MultiAdmin Club')
+        self.user1 = User.objects.create_user(username='admin1', password='pass1', email='a1@example.com')
+        self.user2 = User.objects.create_user(username='admin2', password='pass2', email='a2@example.com')
+        # Создаем два приглашения и принимаем их напрямую
+        inv1 = ClubAdminInvite.objects.create(club=self.club, email='a1@example.com', invited_by=None)
+        inv2 = ClubAdminInvite.objects.create(club=self.club, email='a2@example.com', invited_by=None)
+        inv1.accept(self.user1)
+        inv2.accept(self.user2)
+
+    def test_multiple_admins_exist(self):
+        admins = ClubAdmin.objects.filter(club=self.club).values_list('user__username', flat=True)
+        self.assertIn('admin1', admins)
+        self.assertIn('admin2', admins)
+        self.assertEqual(len(admins), 2)
+
+    def test_admin_badge_on_club_page(self):
+        # user1 заходит на страницу клуба и должен видеть положительный статус
+        self.client.login(username='admin1', password='pass1')
+        resp = self.client.get(f'/club/{self.club.id}/')
+        self.assertContains(resp, 'Вы администратор клуба')
+        # user3 (не админ) видит отрицательный статус
+        user3 = User.objects.create_user(username='user3', password='pass3')
+        self.client.login(username='user3', password='pass3')
+        resp2 = self.client.get(f'/club/{self.club.id}/')
+        self.assertContains(resp2, 'Вы не администратор клуба')
