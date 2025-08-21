@@ -35,9 +35,13 @@
     
     {% if tournament.tournament_type == 'round_robin' %}
       <h2>🏆 Турнирная таблица</h2>
-      <table class="tournament-table">
+      <table class="tournament-table sortable-table">
         <thead>
-          <tr><th>Место</th><th>Игрок</th><th>Очки</th></tr>
+          <tr>
+            <th data-type="number">Место</th>
+            <th data-type="text">Игрок</th>
+            <th data-type="number">Очки</th>
+          </tr>
         </thead>
         <tbody>
           {% for st in standings %}

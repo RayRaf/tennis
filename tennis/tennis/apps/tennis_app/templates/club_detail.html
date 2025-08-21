@@ -44,9 +44,15 @@
 
     <h2>👥 Игроки клуба</h2>
     <div class="tournament-table-wrapper" style="margin-bottom: 1.5rem;">
-      <table class="tournament-table">
+      <table class="tournament-table sortable-table">
         <thead>
-          <tr><th>Игрок</th><th>Рейтинг</th><th>Побед</th><th>Игр</th><th>% побед</th></tr>
+          <tr>
+            <th data-type="text">Игрок</th>
+            <th data-type="number">Рейтинг</th>
+            <th data-type="number">Побед</th>
+            <th data-type="number">Игр</th>
+            <th data-type="number">% побед</th>
+          </tr>
         </thead>
         <tbody>
           {% for player in players %}
