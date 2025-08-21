@@ -432,7 +432,13 @@ class ClubAdminInvite(models.Model):
         # Email должен совпадать (если у пользователя есть email)
         if user.email and user.email.lower() != self.email.lower():
             return False
+        # Создаем связь администратора
         ClubAdmin.objects.get_or_create(user=user, club=self.club)
+        # Обеспечиваем членство в клубе
+        membership, created = ClubMembership.objects.get_or_create(user=user, club=self.club, defaults={'is_active': True})
+        if not membership.is_active:
+            membership.is_active = True
+            membership.save(update_fields=['is_active'])
         self.accepted_at = timezone.now()
         self.is_active = False
         self.save(update_fields=['accepted_at', 'is_active'])

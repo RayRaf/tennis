@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from .models import Club, Player, Tournament, Match, Game, Point
+from .models import Club, Player, Tournament, Match, Game, Point, ClubAdminInvite, ClubAdmin, ClubMembership
+from django.utils import timezone
 
 class MatchLogicTestCase(TestCase):
     def setUp(self):
@@ -129,3 +130,29 @@ class MatchViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.player1.full_name)
         self.assertContains(response, self.player2.full_name)
+
+
+class InviteAcceptanceTestCase(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='invitee', password='testpass', email='invitee@example.com'
+        )
+        self.club = Club.objects.create(name='Invite Club')
+        self.invite = ClubAdminInvite.objects.create(
+            club=self.club, email='invitee@example.com', invited_by=None
+        )
+
+    def test_invites_listed_on_no_club_page(self):
+        self.client.login(username='invitee', password='testpass')
+        resp = self.client.get('/club/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, self.club.name)
+
+    def test_direct_accept_invite(self):
+        self.client.login(username='invitee', password='testpass')
+        resp = self.client.post(f'/invite/accept/{self.invite.id}/')
+        self.assertEqual(resp.status_code, 302)
+        self.invite.refresh_from_db()
+        self.assertFalse(self.invite.is_active)
+        self.assertTrue(ClubAdmin.objects.filter(user=self.user, club=self.club).exists())
+        self.assertTrue(ClubMembership.objects.filter(user=self.user, club=self.club, is_active=True).exists())

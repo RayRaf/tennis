@@ -3,7 +3,26 @@
 {% block content %}
   <h1>Вы пока не состоите в клубе</h1>
   <div class="content">
-    <p>Чтобы участвовать в турнирах и играть с другими, создайте свой клуб или дождитесь приглашения.</p>
+    <p>Чтобы участвовать в турнирах и играть с другими, создайте свой клуб или примите приглашение.</p>
     <a class="btn primary" href="{% url 'tennis_app:create_club' %}">Создать клуб</a>
   </div>
+
+  {% if invites %}
+    <div class="content" style="margin-top:2rem;">
+      <h2>Ваши приглашения</h2>
+      <ul>
+        {% for inv in invites %}
+          <li style="margin-bottom:0.75rem;">
+            <strong>{{ inv.club.name }}</strong>
+            <span style="color:var(--text-muted); font-size:0.85rem;">до {{ inv.expires_at|date:"d.m.Y H:i" }}</span>
+            <form method="post" action="{% url 'tennis_app:accept_invite_direct' inv.id %}" style="display:inline-block; margin-left:1rem;">{% csrf_token %}
+              <button type="submit" class="btn success" style="padding:0.25rem 0.75rem;">Принять приглашение</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <p style="margin-top:2rem;">Пока приглашений нет.</p>
+  {% endif %}
 {% endblock %}

@@ -26,9 +26,11 @@
         {% endfor %}
       </ul>
     </div>
-    <a class="btn" href="{% url 'tennis_app:add_participant' tournament.id %}">Добавить участника</a>
-    {% if tournament.tournament_type == 'elimination' %}
-      <a class="btn" href="{% url 'tennis_app:generate_matches' tournament.id %}">Сгенерировать сетку</a>
+    {% if is_club_admin %}
+      <a class="btn" href="{% url 'tennis_app:add_participant' tournament.id %}">Добавить участника</a>
+      {% if tournament.tournament_type == 'elimination' %}
+        <a class="btn" href="{% url 'tennis_app:generate_matches' tournament.id %}">Сгенерировать сетку</a>
+      {% endif %}
     {% endif %}
     
     {% if tournament.tournament_type == 'round_robin' %}
@@ -65,7 +67,7 @@
                       data-player2="{{ cell.opponent_id }}"
                       data-tournament="{{ tournament.id }}"
                       data-match-id="{{ cell.match_id }}"
-                      {% if cell.status == '' %}onclick="openMatchModal(this)"{% elif cell.status == 'P' %}onclick="startMatch(this)"{% endif %}>
+                      {% if is_club_admin %}{% if cell.status == '' %}onclick="openMatchModal(this)"{% elif cell.status == 'P' %}onclick="startMatch(this)"{% endif %}{% endif %}>
                     {% if cell.status == 'W' %}
                       <div class="cell-content">
                         <span class="result-icon">✓</span>
@@ -120,11 +122,13 @@
                 <div class="match-status">В процессе</div>
               {% endif %}
             </div>
-            {% if not m.winner %}
-              <div class="match-actions">
-                <a class="btn primary" href="{% url 'tennis_app:play_match_live' m.id %}">🎮 Начать матч</a>
-                <a class="btn secondary" href="{% url 'tennis_app:report_match_result' m.id %}">📝 Ввести результат</a>
-              </div>
+            {% if is_club_admin %}
+              {% if not m.winner %}
+                <div class="match-actions">
+                  <a class="btn primary" href="{% url 'tennis_app:play_match_live' m.id %}">🎮 Начать матч</a>
+                  <a class="btn secondary" href="{% url 'tennis_app:report_match_result' m.id %}">📝 Ввести результат</a>
+                </div>
+              {% endif %}
             {% endif %}
           </div>
         {% empty %}
@@ -135,17 +139,20 @@
       </div>
     </div>
     
-    <h3>➕ Новый матч</h3>
-    <div class="content">
-      <form method="post" style="margin-bottom:1rem;">{% csrf_token %}
-        {{ match_form.as_p }}
-        <button type="submit" name="create_match" value="1" class="btn success">Создать матч</button>
-      </form>
-    </div>
+    {% if is_club_admin %}
+      <h3>➕ Новый матч</h3>
+      <div class="content">
+        <form method="post" style="margin-bottom:1rem;">{% csrf_token %}
+          {{ match_form.as_p }}
+          <button type="submit" name="create_match" value="1" class="btn success">Создать матч</button>
+        </form>
+      </div>
+    {% endif %}
     <a class="btn outline" href="{% url 'tennis_app:club_detail' tournament.club.id %}">← Назад к клубу</a>
   </div>
 
 <!-- Модальное окно для создания матча -->
+{% if is_club_admin %}
 <div id="matchModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -166,7 +173,8 @@
       </form>
     </div>
   </div>
-</div>
+ </div>
+{% endif %}
 
 <style>
 /* Стили для матрицы результатов */
@@ -517,6 +525,15 @@
   }
 }
 </style>
+{% if not is_club_admin %}
+<style>
+  /* Отключаем интерактивные курсоры для не администраторов */
+  .matrix-cell { cursor: default !important; }
+  .cell-empty:hover, .cell-progress:hover { transform:none; background:inherit; box-shadow:none; }
+  .cell-empty::after, .cell-progress::after { display:none !important; }
+  .add-match-icon { opacity:0.4; }
+</style>
+{% endif %}
 
 <!-- JSON данные для JavaScript -->
 <script id="players-data" type="application/json">

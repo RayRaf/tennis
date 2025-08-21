@@ -127,11 +127,18 @@ def club_detail(request, club_id):
         stats['win_percent'] = round((stats['wins'] / stats['total_games']) * 100, 1) if stats['total_games'] > 0 else 0
         player.stats = stats
 
+    # Флаг администратора клуба (кнопки добавления скрываем для не админов / неавторизованных)
+    from .models import ClubAdmin  # локальный импорт чтобы избежать циклов при старте
+    is_club_admin = False
+    if request.user.is_authenticated:
+        is_club_admin = ClubAdmin.objects.filter(user=request.user, club=club).exists()
+
     context = {
         'club': club,
         'events': events,
         'tournaments': tournaments,
         'players': players,
+        'is_club_admin': is_club_admin,
     }
 
     return render(request, 'club_detail.html', context)
@@ -163,18 +170,39 @@ def create_club(request):
 
 
 from django.shortcuts import get_object_or_404, render, redirect
-from .models import ClubMembership, Club
+from .models import ClubMembership, Club, ClubAdminInvite
+from django.utils import timezone
 
 def my_club(request):
     if not request.user.is_authenticated:
         return redirect('tennis_app:login_register')
 
-    membership = ClubMembership.objects.filter(user=request.user, is_active=True).first()
+    membership = ClubMembership.objects.filter(user=request.user, is_active=True).select_related('club').first()
 
     if membership:
         return redirect('tennis_app:club_detail', club_id=membership.club.id)
     else:
-        return render(request, 'no_club.html')  # шаблон с предложением создать клуб
+        # Показываем активные приглашения (по email пользователя)
+        invites = []
+        if request.user.email:
+            invites = list(
+                ClubAdminInvite.objects.filter(
+                    email__iexact=request.user.email,
+                    is_active=True,
+                ).select_related('club')
+            )
+            now_ts = timezone.now()
+            # Отфильтровать просроченные (и деактивировать их лениво)
+            valid_invites = []
+            for inv in invites:
+                if inv.expires_at and inv.expires_at < now_ts:
+                    if inv.is_active:
+                        inv.is_active = False
+                        inv.save(update_fields=['is_active'])
+                else:
+                    valid_invites.append(inv)
+            invites = valid_invites
+        return render(request, 'no_club.html', {"invites": invites})  # шаблон с приглашениями если есть
     
 
 
@@ -186,6 +214,10 @@ from .models import TournamentParticipant, Match, Standing, ClubAdminInvite, Clu
 @login_required
 def add_tournament(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:club_detail', club_id=club.id)
     if request.method == 'POST':
         form = TournamentForm(request.POST)
         if form.is_valid():
@@ -206,6 +238,10 @@ def add_tournament(request, club_id):
 @login_required
 def add_event(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:club_detail', club_id=club.id)
     if request.method == 'POST':
         form = ClubEventForm(request.POST)
         if form.is_valid():
@@ -222,6 +258,10 @@ def add_event(request, club_id):
 @login_required
 def add_player(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:club_detail', club_id=club.id)
     if request.method == 'POST':
         form = PlayerForm(request.POST)
         if form.is_valid():
@@ -236,7 +276,6 @@ def add_player(request, club_id):
 
 # ------------------ Турниры расширенно ------------------
 
-@login_required
 def tournament_detail(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
     participants = list(TournamentParticipant.objects.filter(tournament=tournament).select_related('player'))
@@ -246,6 +285,10 @@ def tournament_detail(request, tournament_id):
     # Форма создания матча вручную
     match_form = TournamentMatchForm()
     if request.method == 'POST' and 'create_match' in request.POST:
+        from .models import ClubAdmin
+        if not (request.user.is_authenticated and ClubAdmin.objects.filter(user=request.user, club=tournament.club).exists()):
+            messages.error(request, 'Недостаточно прав')
+            return redirect('tennis_app:tournament_detail', tournament_id=tournament.id)
         match_form = TournamentMatchForm(request.POST)
         # Ограничим выбор списком участников
         allowed_players = Player.objects.filter(tournamentparticipant__tournament=tournament)
@@ -363,6 +406,12 @@ def tournament_detail(request, tournament_id):
                 row.append(cell)
             rr_matrix.append({'player': row_player, 'results': row})
 
+    # Флаг администратора клуба турнира
+    from .models import ClubAdmin
+    is_club_admin = False
+    if request.user.is_authenticated:
+        is_club_admin = ClubAdmin.objects.filter(user=request.user, club=tournament.club).exists()
+
     return render(request, 'tournament_detail.html', {
         'tournament': tournament,
         'participants': participants,
@@ -370,12 +419,17 @@ def tournament_detail(request, tournament_id):
         'standings': standings,
         'match_form': match_form,
         'rr_matrix': rr_matrix,
+        'is_club_admin': is_club_admin,
     })
 
 
 @login_required
 def add_participant(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=tournament.club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:tournament_detail', tournament_id=tournament.id)
     if request.method == 'POST':
         form = TournamentParticipantForm(request.POST)
         if form.is_valid():
@@ -397,6 +451,10 @@ def add_participant(request, tournament_id):
 @login_required
 def generate_matches(request, tournament_id):
     tournament = get_object_or_404(Tournament, id=tournament_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=tournament.club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:tournament_detail', tournament_id=tournament.id)
     tournament.generate_matches()
     return redirect('tennis_app:tournament_detail', tournament_id=tournament.id)
 
@@ -404,6 +462,10 @@ def generate_matches(request, tournament_id):
 @login_required
 def report_match_result(request, match_id):
     match = get_object_or_404(Match, id=match_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=match.tournament.club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:tournament_detail', tournament_id=match.tournament.id)
     if request.method == 'POST':
         winner_id = request.POST.get('winner')
         try:
@@ -421,6 +483,10 @@ def report_match_result(request, match_id):
 @login_required
 def play_match_live(request, match_id):
     match = get_object_or_404(Match, id=match_id)
+    from .models import ClubAdmin
+    if not ClubAdmin.objects.filter(user=request.user, club=match.tournament.club).exists():
+        messages.error(request, 'Недостаточно прав')
+        return redirect('tennis_app:tournament_detail', tournament_id=match.tournament.id)
     if not (match.player1 and match.player2):
         messages.error(request, 'Невозможно начать: не оба игрока заданы')
         return redirect('tennis_app:tournament_detail', tournament_id=match.tournament.id)
@@ -622,6 +688,29 @@ def accept_invite(request):
     else:
         form = AcceptInviteForm()
     return render(request, 'accept_invite.html', {'form': form})
+
+
+@login_required
+def accept_invite_direct(request, invite_id):
+    """Прямое принятие приглашения без ввода токена (кнопка на странице 'Мой клуб')."""
+    invite = ClubAdminInvite.objects.filter(id=invite_id, is_active=True).select_related('club').first()
+    if not invite:
+        messages.error(request, 'Приглашение не найдено или уже не активно')
+        return redirect('tennis_app:my_club')
+    # Проверяем email совпадение
+    if request.user.email and request.user.email.lower() != invite.email.lower():
+        messages.error(request, 'Email пользователя не совпадает с email приглашения')
+        return redirect('tennis_app:my_club')
+    if invite.expires_at and timezone.now() > invite.expires_at:
+        invite.is_active = False
+        invite.save(update_fields=['is_active'])
+        messages.error(request, 'Приглашение истекло')
+        return redirect('tennis_app:my_club')
+    if invite.accept(request.user):
+        messages.success(request, f'Вы стали администратором клуба {invite.club.name}')
+        return redirect('tennis_app:club_detail', club_id=invite.club.id)
+    messages.error(request, 'Не удалось принять приглашение')
+    return redirect('tennis_app:my_club')
 
 
 

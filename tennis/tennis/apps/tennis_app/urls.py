@@ -24,6 +24,7 @@ urlpatterns = [
     path('match/<int:match_id>/play/', views.play_match_live, name='play_match_live'),
     path('club/<int:club_id>/invite_admin/', views.invite_admin, name='invite_admin'),
     path('invite/accept/', views.accept_invite, name='accept_invite'),
+    path('invite/accept/<int:invite_id>/', views.accept_invite_direct, name='accept_invite_direct'),
     path('friend_play', views.friend_play, name='friend_play'),
     path('api/save_friendly_game/', views.save_friendly_game, name='save_friendly_game'),
     # Removed direct references to old templates for clarity
