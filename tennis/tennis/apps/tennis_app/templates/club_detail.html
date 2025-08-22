@@ -57,7 +57,7 @@
         <tbody>
           {% for player in players %}
             <tr>
-              <td><strong>{{ player.full_name }}</strong></td>
+              <td><strong><a href="{% url 'tennis_app:player_detail' player.id %}" style="text-decoration:none; color:inherit;">{{ player.full_name }}</a></strong></td>
               <td>{{ player.rating }}</td>
               <td>{{ player.stats.wins }}</td>
               <td>{{ player.stats.total_games }}</td>

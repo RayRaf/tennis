@@ -144,6 +144,93 @@ def club_detail(request, club_id):
     return render(request, 'club_detail.html', context)
 
 
+def player_detail(request, player_id):
+    """Страница статистики игрока: сверху общая статистика, ниже — список игроков клуба с H2H."""
+    player = get_object_or_404(Player.objects.select_related('club'), id=player_id)
+    club = player.club
+
+    # Общая статистика игрока (используем существующий метод)
+    overall = player.get_stats()
+    overall['win_percent'] = round((overall['wins'] / overall['total_games']) * 100, 1) if overall.get('total_games') else 0
+
+    # Head-to-head по игрокам клуба
+    from django.db.models import Q
+    from .models import Match, FriendlyGame
+
+    club_players = list(Player.objects.filter(club=club).exclude(id=player.id).order_by('full_name'))
+    h2h_rows = []
+
+    # Собираем одиночные товарищеские и матчи, где оба игрока заданы
+    for opp in club_players:
+        # Матчи турниров между player и opp
+        matches = Match.objects.filter(
+            Q(player1__in=[player, opp]) & Q(player2__in=[player, opp])
+        )
+        # Одиночные товарищеские между player и opp
+        friend_single = FriendlyGame.objects.filter(
+            game_type='single'
+        ).filter(
+            (Q(player1=player) & Q(player2=opp)) | (Q(player1=opp) & Q(player2=player))
+        )
+
+        # Парные товарищеские: считаем, если они были в одной из команд с кем-то против кого-то из команды соперника
+        # Для H2H считаем игру, если оба игрока участвовали и были в разных командах
+        friend_double = FriendlyGame.objects.filter(game_type='double').filter(
+            (
+                (Q(team1_player1=player) | Q(team1_player2=player)) &
+                (Q(team2_player1=opp) | Q(team2_player2=opp))
+            ) | (
+                (Q(team2_player1=player) | Q(team2_player2=player)) &
+                (Q(team1_player1=opp) | Q(team1_player2=opp))
+            )
+        )
+
+        total = matches.count() + friend_single.count() + friend_double.count()
+
+        # Считаем только завершенные для вин/лосс и процента
+        finished_matches = matches.exclude(winner__isnull=True)
+        finished_friend_single = friend_single.exclude(winner__isnull=True)
+        finished_friend_double = friend_double.exclude(winning_team__isnull=True)
+        completed = (
+            finished_matches.count() +
+            finished_friend_single.count() +
+            finished_friend_double.count()
+        )
+
+        # Победы игрока
+        wins = 0
+        wins += finished_matches.filter(winner=player).count()
+        wins += finished_friend_single.filter(winner=player).count()
+        # Победы в парных — по winning_team
+        wins += FriendlyGame.objects.filter(id__in=finished_friend_double.values('id')).filter(
+            (
+                (Q(team1_player1=player) | Q(team1_player2=player)) & Q(winning_team=1)
+            ) | (
+                (Q(team2_player1=player) | Q(team2_player2=player)) & Q(winning_team=2)
+            )
+        ).count()
+
+        losses = completed - wins
+        win_pct = round((wins / completed) * 100, 1) if completed else 0
+        h2h_rows.append({
+            'opponent': opp,
+            'games': total,
+            'wins': wins,
+            'losses': losses,
+            'win_pct': win_pct,
+        })
+
+    # Сортировка по количеству игр, затем по названию
+    h2h_rows.sort(key=lambda r: (-r['games'], r['opponent'].full_name.lower()))
+
+    return render(request, 'player_detail.html', {
+        'player': player,
+        'club': club,
+        'overall': overall,
+        'h2h_rows': h2h_rows,
+    })
+
+
 
 from django.contrib.auth.decorators import login_required
 from .models import Club, ClubMembership

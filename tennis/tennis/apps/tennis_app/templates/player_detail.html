@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}{{ player.full_name }} — Статистика{% endblock %}
+{% block content %}
+  <h1>👤 {{ player.full_name }}</h1>
+  <div class="content">
+    <div class="dashboard-cards" style="display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem;">
+      <div class="card stat" style="min-width:140px;">
+        <div class="stat-title">Игры</div>
+        <div class="stat-value" style="font-size:2rem;">{{ overall.total_games }}</div>
+      </div>
+      <div class="card stat" style="min-width:140px;">
+        <div class="stat-title">Победы</div>
+        <div class="stat-value" style="font-size:2rem;">{{ overall.wins }}</div>
+      </div>
+      <div class="card stat" style="min-width:140px;">
+        <div class="stat-title">Поражения</div>
+        <div class="stat-value" style="font-size:2rem;">{{ overall.losses }}</div>
+      </div>
+      <div class="card stat" style="min-width:140px;">
+        <div class="stat-title">% побед</div>
+        <div class="stat-value" style="font-size:2rem;">{{ overall.win_percent }}%</div>
+      </div>
+      <div class="card stat" style="min-width:140px;">
+        <div class="stat-title">Набранные очки</div>
+        <div class="stat-value" style="font-size:2rem;">{{ overall.scored_points }}</div>
+      </div>
+    </div>
+
+    <h2>👥 Взаимные встречи в клубе «{{ club.name }}»</h2>
+    <div class="tournament-table-wrapper">
+      <table class="tournament-table sortable-table">
+        <thead>
+          <tr>
+            <th data-type="text">Соперник</th>
+            <th data-type="number">Игр</th>
+            <th data-type="number">Побед</th>
+            <th data-type="number">Поражений</th>
+            <th data-type="number">% побед</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in h2h_rows %}
+            <tr>
+              <td><a href="{% url 'tennis_app:player_detail' row.opponent.id %}">{{ row.opponent.full_name }}</a></td>
+              <td>{{ row.games }}</td>
+              <td>{{ row.wins }}</td>
+              <td>{{ row.losses }}</td>
+              <td>{{ row.win_pct }}%</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Нет данных</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <a class="btn" href="{% url 'tennis_app:club_detail' club.id %}">← Назад в клуб</a>
+    </div>
+  </div>
+{% endblock %}
