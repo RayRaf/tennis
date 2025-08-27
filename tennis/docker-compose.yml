@@ -12,3 +12,16 @@ services:
 
     volumes:
       - ./db:/app/db
+      - static_volume:/app/staticfiles
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_tennis
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/staticfiles
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  static_volume:
