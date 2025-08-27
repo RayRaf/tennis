@@ -22,7 +22,7 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  restart: unless-stopped
+    restart: unless-stopped
 
 volumes:
   static_volume:
