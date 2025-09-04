@@ -26,7 +26,23 @@
       </div>
     </div>
 
-    <h2>👥 Взаимные встречи в клубе «{{ club.name }}»</h2>
+    <h2>� Статистика по месяцам</h2>
+    <div class="chart-container" style="margin-bottom: 2rem;">
+      <div class="chart-controls" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+        <label for="yearSelect">Год:</label>
+        <select id="yearSelect" style="padding: 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">
+          <!-- Опции добавятся через JavaScript -->
+        </select>
+        <div class="chart-loading" id="chartLoading" style="display: none; color: var(--text-muted);">
+          Загрузка...
+        </div>
+      </div>
+      <div style="position: relative; width: 100%; height: 400px;">
+        <canvas id="monthlyStatsChart"></canvas>
+      </div>
+    </div>
+
+    <h2>�👥 Взаимные встречи в клубе «{{ club.name }}»</h2>
     <div class="tournament-table-wrapper">
       <table class="tournament-table sortable-table">
         <thead>
@@ -58,4 +74,177 @@
       <a class="btn" href="{% url 'tennis_app:club_detail' club.id %}">← Назад в клуб</a>
     </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const playerId = {{ player.id }};
+    const yearSelect = document.getElementById('yearSelect');
+    const chartLoading = document.getElementById('chartLoading');
+    const ctx = document.getElementById('monthlyStatsChart').getContext('2d');
+    let chart = null;
+
+    // Заполняем селектор годов (последние 5 лет)
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear; year >= currentYear - 4; year--) {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (year === currentYear) option.selected = true;
+        yearSelect.appendChild(option);
+    }
+
+    // Функция для загрузки и отображения данных
+    async function loadAndDisplayChart(year) {
+        chartLoading.style.display = 'inline';
+        
+        try {
+            const response = await fetch(`/api/player/${playerId}/monthly_stats/?year=${year}`);
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных');
+            }
+            
+            const data = await response.json();
+            displayChart(data.monthly_stats);
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Не удалось загрузить данные статистики');
+        } finally {
+            chartLoading.style.display = 'none';
+        }
+    }
+
+    // Функция для отображения графика
+    function displayChart(monthlyStats) {
+        const months = monthlyStats.map(item => item.month_name);
+        const totalGames = monthlyStats.map(item => item.total_games);
+        const wins = monthlyStats.map(item => item.wins);
+        const losses = monthlyStats.map(item => item.losses);
+        const winPercent = monthlyStats.map(item => item.win_percent);
+
+        // Уничтожаем предыдущий график если есть
+        if (chart) {
+            chart.destroy();
+        }
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Общее количество игр',
+                        data: totalGames,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Победы',
+                        data: wins,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Поражения',
+                        data: losses,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Процент побед (%)',
+                        data: winPercent,
+                        borderColor: 'rgb(255, 206, 86)',
+                        backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                        yAxisID: 'y1',
+                        tension: 0.1,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Статистика игрока по месяцам (${yearSelect.value})`
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.dataset.yAxisID === 'y1') {
+                                    label += context.parsed.y + '%';
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Месяц'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Количество игр'
+                        },
+                        min: 0
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Процент побед (%)'
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+    }
+
+    // Обработчик изменения года
+    yearSelect.addEventListener('change', function() {
+        loadAndDisplayChart(this.value);
+    });
+
+    // Загружаем данные для текущего года при загрузке страницы
+    loadAndDisplayChart(currentYear);
+});
+</script>
 {% endblock %}

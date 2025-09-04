@@ -102,6 +102,93 @@ class Player(models.Model):
             'scored_points': total_points
         }
 
+    def get_monthly_stats(self, year=None):
+        """Получает статистику игрока по месяцам за указанный год"""
+        from django.db.models import Q
+        from datetime import datetime
+        from collections import defaultdict
+        
+        if year is None:
+            year = datetime.now().year
+        
+        # Инициализируем словарь для каждого месяца
+        monthly_data = {}
+        for month in range(1, 13):
+            monthly_data[month] = {
+                'month': month,
+                'month_name': datetime(year, month, 1).strftime('%B'),
+                'total_games': 0,
+                'wins': 0,
+                'losses': 0,
+                'win_percent': 0
+            }
+        
+        # Получаем все матчи игрока за год
+        matches = Match.objects.filter(
+            Q(player1=self) | Q(player2=self),
+            played_at__year=year
+        )
+        
+        # Получаем все товарищеские игры за год
+        friendlies_single = FriendlyGame.objects.filter(
+            game_type='single',
+            played_at__year=year
+        ).filter(Q(player1=self) | Q(player2=self))
+        
+        friendlies_double = FriendlyGame.objects.filter(
+            game_type='double',
+            played_at__year=year
+        ).filter(
+            Q(team1_player1=self) | Q(team1_player2=self) | 
+            Q(team2_player1=self) | Q(team2_player2=self)
+        )
+        
+        # Обрабатываем матчи турниров
+        for match in matches:
+            month = match.played_at.month
+            monthly_data[month]['total_games'] += 1
+            
+            if match.winner == self:
+                monthly_data[month]['wins'] += 1
+            elif match.winner is not None:  # Матч завершен, но игрок проиграл
+                monthly_data[month]['losses'] += 1
+        
+        # Обрабатываем одиночные товарищеские игры
+        for friendly in friendlies_single:
+            month = friendly.played_at.month
+            monthly_data[month]['total_games'] += 1
+            
+            if friendly.winner == self:
+                monthly_data[month]['wins'] += 1
+            elif friendly.winner is not None:
+                monthly_data[month]['losses'] += 1
+        
+        # Обрабатываем парные товарищеские игры
+        for friendly in friendlies_double:
+            month = friendly.played_at.month
+            monthly_data[month]['total_games'] += 1
+            
+            if friendly.winning_team is not None:
+                # Определяем, в какой команде играл игрок
+                player_team = None
+                if friendly.team1_player1 == self or friendly.team1_player2 == self:
+                    player_team = 1
+                elif friendly.team2_player1 == self or friendly.team2_player2 == self:
+                    player_team = 2
+                
+                if player_team == friendly.winning_team:
+                    monthly_data[month]['wins'] += 1
+                else:
+                    monthly_data[month]['losses'] += 1
+        
+        # Вычисляем процент побед для каждого месяца
+        for month_data in monthly_data.values():
+            completed_games = month_data['wins'] + month_data['losses']
+            if completed_games > 0:
+                month_data['win_percent'] = round((month_data['wins'] / completed_games) * 100, 1)
+        
+        return list(monthly_data.values())
+
 
 class Tournament(models.Model):
     ROUND_ROBIN = 'round_robin'

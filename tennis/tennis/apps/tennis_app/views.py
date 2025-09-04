@@ -231,6 +231,31 @@ def player_detail(request, player_id):
     })
 
 
+from django.http import JsonResponse
+
+def player_monthly_stats(request, player_id):
+    """API endpoint для получения месячной статистики игрока"""
+    try:
+        player = get_object_or_404(Player, id=player_id)
+        year = request.GET.get('year')
+        
+        if year:
+            try:
+                year = int(year)
+            except ValueError:
+                return JsonResponse({'error': 'Неверный формат года'}, status=400)
+        
+        monthly_stats = player.get_monthly_stats(year)
+        
+        return JsonResponse({
+            'player_name': player.full_name,
+            'year': year or timezone.now().year,
+            'monthly_stats': monthly_stats
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 
 from django.contrib.auth.decorators import login_required
 from .models import Club, ClubMembership

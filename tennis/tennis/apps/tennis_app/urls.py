@@ -18,6 +18,7 @@ urlpatterns = [
     path('club/<int:club_id>/add_event/', views.add_event, name='add_event'),
     path('club/<int:club_id>/add_player/', views.add_player, name='add_player'), 
     path('player/<int:player_id>/', views.player_detail, name='player_detail'),
+    path('api/player/<int:player_id>/monthly_stats/', views.player_monthly_stats, name='player_monthly_stats'),
     path('tournament/<int:tournament_id>/', views.tournament_detail, name='tournament_detail'),
     path('tournament/<int:tournament_id>/add_participant/', views.add_participant, name='add_participant'),
     path('tournament/<int:tournament_id>/generate_matches/', views.generate_matches, name='generate_matches'),
