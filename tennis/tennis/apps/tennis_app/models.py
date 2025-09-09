@@ -435,6 +435,11 @@ class FriendlyGame(models.Model):
     team2_player1 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team2_p1', verbose_name="Команда 2 Игрок 1")
     team2_player2 = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='doubles_team2_p2', verbose_name="Команда 2 Игрок 2")
     winning_team = models.PositiveSmallIntegerField("Победившая команда", choices=[(1, 'Команда 1'), (2, 'Команда 2')], null=True, blank=True)
+    
+    # Поля для счета и судьи
+    score_team1 = models.PositiveIntegerField("Счет команды 1", default=0)
+    score_team2 = models.PositiveIntegerField("Счет команды 2", default=0) 
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Записал результат")
 
     class Meta:
         verbose_name = "Свободная игра"

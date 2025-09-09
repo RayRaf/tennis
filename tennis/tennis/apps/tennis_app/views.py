@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 import json
 
 from .forms import LoginForm, RegisterForm
@@ -223,11 +224,146 @@ def player_detail(request, player_id):
     # Сортировка по количеству игр, затем по названию
     h2h_rows.sort(key=lambda r: (-r['games'], r['opponent'].full_name.lower()))
 
+    # Получаем все игры игрока для списка игр с деталями
+    all_games = []
+    
+    # Турнирные матчи
+    tournament_matches = Match.objects.filter(
+        Q(player1=player) | Q(player2=player)
+    ).select_related('tournament', 'player1', 'player2', 'winner').order_by('-played_at')
+    
+    for match in tournament_matches:
+        opponent = match.player2 if match.player1 == player else match.player1
+        # Определяем результат
+        if match.winner == player:
+            result = 'Победа'
+            result_class = 'win'
+        elif match.winner is not None:
+            result = 'Поражение'
+            result_class = 'loss'
+        else:
+            result = 'Не завершен'
+            result_class = 'incomplete'
+        
+        # Определяем судью (того, кто сохранил результат)
+        referee = match.tournament.created_by.username if match.tournament.created_by else 'Система'
+        
+        all_games.append({
+            'date': match.played_at,
+            'type': 'tournament',
+            'tournament_name': match.tournament.name,
+            'opponent': opponent.full_name if opponent else 'TBA',
+            'score': f"{match.sets_player1}:{match.sets_player2}" if match.finished else 'В процессе',
+            'result': result,
+            'result_class': result_class,
+            'referee': referee
+        })
+    
+    # Одиночные товарищеские игры
+    friendly_singles = FriendlyGame.objects.filter(
+        game_type='single'
+    ).filter(
+        Q(player1=player) | Q(player2=player)
+    ).select_related('player1', 'player2', 'winner', 'recorded_by').order_by('-played_at')
+    
+    for friendly in friendly_singles:
+        opponent = friendly.player2 if friendly.player1 == player else friendly.player1
+        
+        # Определяем результат
+        if friendly.winner == player:
+            result = 'Победа'
+            result_class = 'win'
+        elif friendly.winner is not None:
+            result = 'Поражение'
+            result_class = 'loss'
+        else:
+            result = 'Не завершена'
+            result_class = 'incomplete'
+        
+        # Определяем счет для одиночных игр
+        if friendly.player1 == player:
+            score = f"{friendly.score_team1}:{friendly.score_team2}"
+        else:
+            score = f"{friendly.score_team2}:{friendly.score_team1}"
+        
+        # Определяем судью
+        referee = friendly.recorded_by.username if friendly.recorded_by else 'Н/Д'
+        
+        all_games.append({
+            'date': friendly.played_at,
+            'type': 'friendly_single',
+            'tournament_name': 'Товарищеская (одиночная)',
+            'opponent': opponent.full_name if opponent else 'Неизвестно',
+            'score': score if friendly.score_team1 > 0 or friendly.score_team2 > 0 else 'Н/Д',
+            'result': result,
+            'result_class': result_class,
+            'referee': referee
+        })
+    
+    # Парные товарищеские игры
+    friendly_doubles = FriendlyGame.objects.filter(
+        game_type='double'
+    ).filter(
+        Q(team1_player1=player) | Q(team1_player2=player) | 
+        Q(team2_player1=player) | Q(team2_player2=player)
+    ).select_related('team1_player1', 'team1_player2', 'team2_player1', 'team2_player2', 'recorded_by').order_by('-played_at')
+    
+    for friendly in friendly_doubles:
+        # Определяем команду игрока и команду соперника
+        if friendly.team1_player1 == player or friendly.team1_player2 == player:
+            player_team = 1
+            partner = friendly.team1_player2 if friendly.team1_player1 == player else friendly.team1_player1
+            opponents = [friendly.team2_player1, friendly.team2_player2]
+            score = f"{friendly.score_team1}:{friendly.score_team2}"
+        else:
+            player_team = 2
+            partner = friendly.team2_player2 if friendly.team2_player1 == player else friendly.team2_player1
+            opponents = [friendly.team1_player1, friendly.team1_player2]
+            score = f"{friendly.score_team2}:{friendly.score_team1}"
+        
+        # Формируем строку с соперниками
+        opponent_names = " / ".join([p.full_name for p in opponents if p])
+        partner_name = partner.full_name if partner else 'Неизвестно'
+        
+        # Определяем результат
+        if friendly.winning_team == player_team:
+            result = 'Победа'
+            result_class = 'win'
+        elif friendly.winning_team is not None:
+            result = 'Поражение'
+            result_class = 'loss'
+        else:
+            result = 'Не завершена'
+            result_class = 'incomplete'
+        
+        # Определяем судью
+        referee = friendly.recorded_by.username if friendly.recorded_by else 'Н/Д'
+        
+        all_games.append({
+            'date': friendly.played_at,
+            'type': 'friendly_double',
+            'tournament_name': 'Товарищеская (парная)',
+            'opponent': f"{opponent_names} (партнер: {partner_name})",
+            'score': score if friendly.score_team1 > 0 or friendly.score_team2 > 0 else 'Н/Д',
+            'result': result,
+            'result_class': result_class,
+            'referee': referee
+        })
+    
+    # Сортируем все игры по дате (новые первые)
+    all_games.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Пагинация для списка игр
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(all_games, 10)  # 10 игр на страницу
+    games_page = paginator.get_page(page_number)
+
     return render(request, 'player_detail.html', {
         'player': player,
         'club': club,
         'overall': overall,
         'h2h_rows': h2h_rows,
+        'games_page': games_page,
     })
 
 
@@ -873,7 +1009,10 @@ def save_friendly_game(request):
                 player2=player2,
                 winner=winner,
                 club=player1.club if (player1 and player2 and player1.club == player2.club) else None,
-                played_at=end_time
+                played_at=end_time,
+                score_team1=score1,
+                score_team2=score2,
+                recorded_by=request.user if request.user.is_authenticated else None
             )
         else:  # double
             t1p1 = get_or_create_player(data.get("team1_player1"))
@@ -894,7 +1033,10 @@ def save_friendly_game(request):
                 team2_player1=t2p1,
                 team2_player2=t2p2,
                 winning_team=winning_team,
-                played_at=end_time
+                played_at=end_time,
+                score_team1=score1,
+                score_team2=score2,
+                recorded_by=request.user if request.user.is_authenticated else None
             )
 
         Game.objects.create(

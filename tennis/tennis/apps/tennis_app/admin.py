@@ -62,9 +62,22 @@ class MatchAdmin(admin.ModelAdmin):
 
 @admin.register(FriendlyGame)
 class FriendlyGameAdmin(admin.ModelAdmin):
-    list_display = ("club", "player1", "player2", "winner", "played_at")
-    list_filter = ("club",)
-    search_fields = ("player1__full_name", "player2__full_name")
+    list_display = ("club", "game_type", "get_players", "get_score", "winner", "recorded_by", "played_at")
+    list_filter = ("club", "game_type", "recorded_by")
+    search_fields = ("player1__full_name", "player2__full_name", "team1_player1__full_name", "team2_player1__full_name")
+    
+    def get_players(self, obj):
+        if obj.game_type == 'single':
+            return f"{obj.player1} vs {obj.player2 or '—'}"
+        else:
+            team1 = " / ".join([p.full_name for p in [obj.team1_player1, obj.team1_player2] if p]) or '—'
+            team2 = " / ".join([p.full_name for p in [obj.team2_player1, obj.team2_player2] if p]) or '—'
+            return f"{team1} vs {team2}"
+    get_players.short_description = "Игроки"
+    
+    def get_score(self, obj):
+        return f"{obj.score_team1}:{obj.score_team2}"
+    get_score.short_description = "Счет"
 
 
 @admin.action(description="Пересчитать счет для выбранных партий")

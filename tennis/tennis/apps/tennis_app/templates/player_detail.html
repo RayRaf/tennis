@@ -70,6 +70,62 @@
       </table>
     </div>
 
+    <h2>🎾 История игр</h2>
+    <div class="tournament-table-wrapper">
+      <table class="tournament-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Турнир/Тип</th>
+            <th>Соперник(и)</th>
+            <th>Счет</th>
+            <th>Результат</th>
+            <th>Судья</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for game in games_page %}
+            <tr>
+              <td>{{ game.date|date:"d.m.Y H:i" }}</td>
+              <td>{{ game.tournament_name }}</td>
+              <td>{{ game.opponent }}</td>
+              <td>{{ game.score }}</td>
+              <td>
+                <span class="game-result {{ game.result_class }}">{{ game.result }}</span>
+              </td>
+              <td>{{ game.referee }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center; color: var(--text-muted);">Нет данных об играх</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Пагинация -->
+    {% if games_page.has_other_pages %}
+      <div class="pagination-container">
+        <div class="pagination">
+          {% if games_page.has_previous %}
+            <a href="?page=1" class="pagination-link">&laquo; Первая</a>
+            <a href="?page={{ games_page.previous_page_number }}" class="pagination-link">‹ Предыдущая</a>
+          {% endif %}
+
+          <span class="pagination-info">
+            Страница {{ games_page.number }} из {{ games_page.paginator.num_pages }}
+            ({{ games_page.paginator.count }} игр{{ games_page.paginator.count|pluralize:"а,ы," }})
+          </span>
+
+          {% if games_page.has_next %}
+            <a href="?page={{ games_page.next_page_number }}" class="pagination-link">Следующая ›</a>
+            <a href="?page={{ games_page.paginator.num_pages }}" class="pagination-link">Последняя &raquo;</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
     <div style="margin-top:1rem;">
       <a class="btn" href="{% url 'tennis_app:club_detail' club.id %}">← Назад в клуб</a>
     </div>
