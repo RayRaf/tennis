@@ -56,53 +56,74 @@ class Player(models.Model):
     def __str__(self):
         return self.full_name
 
-    def get_stats(self):
+    def get_stats(self, include_doubles=True):
         matches = Match.objects.filter(models.Q(player1=self) | models.Q(player2=self))
         # Одиночные товарищеские
         friendlies_single = FriendlyGame.objects.filter(game_type='single').filter(models.Q(player1=self) | models.Q(player2=self))
-        # Парные товарищеские (искать во всех слотах команды)
-        friendlies_double = FriendlyGame.objects.filter(game_type='double').filter(
-            models.Q(team1_player1=self) | models.Q(team1_player2=self) | models.Q(team2_player1=self) | models.Q(team2_player2=self)
-        )
-        friendlies = friendlies_single.union(friendlies_double)
-        match_wins = matches.filter(winner=self).count()
-        # Победы в одиночных как раньше + победы в парных, где его команда выиграла
-        friendly_single_wins = friendlies_single.filter(winner=self).count()
-        friendly_double_wins = FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
-            (
-                (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=1)
-            ) | (
-                (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=2)
+        
+        if include_doubles:
+            # Парные товарищеские (искать во всех слотах команды)
+            friendlies_double = FriendlyGame.objects.filter(game_type='double').filter(
+                models.Q(team1_player1=self) | models.Q(team1_player2=self) | models.Q(team2_player1=self) | models.Q(team2_player2=self)
             )
-        ).count()
+            friendlies = friendlies_single.union(friendlies_double)
+        else:
+            friendlies_double = FriendlyGame.objects.none()
+            friendlies = friendlies_single
+        
+        match_wins = matches.filter(winner=self).count()
+        # Победы в одиночных как раньше + победы в парных, где его команда выиграла (если включены парные)
+        friendly_single_wins = friendlies_single.filter(winner=self).count()
+        
+        if include_doubles:
+            friendly_double_wins = FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
+                (
+                    (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=1)
+                ) | (
+                    (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=2)
+                )
+            ).count()
+        else:
+            friendly_double_wins = 0
+            
         friendly_wins = friendly_single_wins + friendly_double_wins
         total_points = Point.objects.filter(scored_by=self).count()
-        games = Game.objects.filter(models.Q(match__player1=self) | models.Q(match__player2=self) |
-                                     models.Q(friendly__player1=self) | models.Q(friendly__player2=self) |
-                                     models.Q(friendly__team1_player1=self) | models.Q(friendly__team1_player2=self) |
-                                     models.Q(friendly__team2_player1=self) | models.Q(friendly__team2_player2=self))
+        
+        if include_doubles:
+            games = Game.objects.filter(models.Q(match__player1=self) | models.Q(match__player2=self) |
+                                         models.Q(friendly__player1=self) | models.Q(friendly__player2=self) |
+                                         models.Q(friendly__team1_player1=self) | models.Q(friendly__team1_player2=self) |
+                                         models.Q(friendly__team2_player1=self) | models.Q(friendly__team2_player2=self))
+        else:
+            games = Game.objects.filter(models.Q(match__player1=self) | models.Q(match__player2=self) |
+                                         models.Q(friendly__player1=self) | models.Q(friendly__player2=self))
+        
+        # Поражения: одиночные где не winner + парные где его команда проиграла (если включены парные)
+        losses = (
+            matches.exclude(winner=self).count() +
+            friendlies_single.exclude(winner=self).count()
+        )
+        
+        if include_doubles:
+            losses += FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
+                (
+                    (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=2)
+                ) | (
+                    (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=1)
+                )
+            ).count()
+        
         return {
             'matches': matches.count(),
-            'friendlies': friendlies.count(),  # общее число товарищеских (single + double)
+            'friendlies': friendlies.count(),  # общее число товарищеских (single + double если включены)
             'total_games': matches.count() + friendlies.count(),
             'total_parties': games.count(),
             'wins': match_wins + friendly_wins,
-            # Поражения: одиночные где не winner + парные где его команда проиграла
-            'losses': (
-                matches.exclude(winner=self).count() +
-                friendlies_single.exclude(winner=self).count() +
-                FriendlyGame.objects.filter(game_type='double', winning_team__isnull=False).filter(
-                    (
-                        (models.Q(team1_player1=self) | models.Q(team1_player2=self)) & models.Q(winning_team=2)
-                    ) | (
-                        (models.Q(team2_player1=self) | models.Q(team2_player2=self)) & models.Q(winning_team=1)
-                    )
-                ).count()
-            ),
+            'losses': losses,
             'scored_points': total_points
         }
 
-    def get_monthly_stats(self, year=None):
+    def get_monthly_stats(self, year=None, include_doubles=True):
         """Получает статистику игрока по месяцам за указанный год"""
         from django.db.models import Q
         from datetime import datetime
@@ -135,13 +156,16 @@ class Player(models.Model):
             played_at__year=year
         ).filter(Q(player1=self) | Q(player2=self))
         
-        friendlies_double = FriendlyGame.objects.filter(
-            game_type='double',
-            played_at__year=year
-        ).filter(
-            Q(team1_player1=self) | Q(team1_player2=self) | 
-            Q(team2_player1=self) | Q(team2_player2=self)
-        )
+        if include_doubles:
+            friendlies_double = FriendlyGame.objects.filter(
+                game_type='double',
+                played_at__year=year
+            ).filter(
+                Q(team1_player1=self) | Q(team1_player2=self) | 
+                Q(team2_player1=self) | Q(team2_player2=self)
+            )
+        else:
+            friendlies_double = FriendlyGame.objects.none()
         
         # Обрабатываем матчи турниров
         for match in matches:
@@ -163,23 +187,24 @@ class Player(models.Model):
             elif friendly.winner is not None:
                 monthly_data[month]['losses'] += 1
         
-        # Обрабатываем парные товарищеские игры
-        for friendly in friendlies_double:
-            month = friendly.played_at.month
-            monthly_data[month]['total_games'] += 1
-            
-            if friendly.winning_team is not None:
-                # Определяем, в какой команде играл игрок
-                player_team = None
-                if friendly.team1_player1 == self or friendly.team1_player2 == self:
-                    player_team = 1
-                elif friendly.team2_player1 == self or friendly.team2_player2 == self:
-                    player_team = 2
+        # Обрабатываем парные товарищеские игры (только если include_doubles=True)
+        if include_doubles:
+            for friendly in friendlies_double:
+                month = friendly.played_at.month
+                monthly_data[month]['total_games'] += 1
                 
-                if player_team == friendly.winning_team:
-                    monthly_data[month]['wins'] += 1
-                else:
-                    monthly_data[month]['losses'] += 1
+                if friendly.winning_team is not None:
+                    # Определяем, в какой команде играл игрок
+                    player_team = None
+                    if friendly.team1_player1 == self or friendly.team1_player2 == self:
+                        player_team = 1
+                    elif friendly.team2_player1 == self or friendly.team2_player2 == self:
+                        player_team = 2
+                    
+                    if player_team == friendly.winning_team:
+                        monthly_data[month]['wins'] += 1
+                    else:
+                        monthly_data[month]['losses'] += 1
         
         # Вычисляем процент побед для каждого месяца
         for month_data in monthly_data.values():
