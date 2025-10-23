@@ -12,4 +12,4 @@ services:
 
     volumes:
       - ./db:/app/db
-      - ./tennis/static:/app/staticfiles
+      - /var/www/tennis_static:/app/staticfiles
