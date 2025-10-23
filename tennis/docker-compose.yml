@@ -12,7 +12,7 @@ services:
 
     volumes:
       - ./db:/app/db
-      - static_volume:/app/staticfiles
+      - ./static:/app/staticfiles
 
 volumes:
   static_volume:
