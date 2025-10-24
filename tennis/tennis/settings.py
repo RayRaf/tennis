@@ -129,8 +129,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Источники статики (помимо app/static). Добавляем каталог с исходной кастомной статикой.
+# В текущей структуре репозитория кастомная статика лежит в '<repo>/tennis/staticfiles',
+# а не в 'static'. Укажем его явно, чтобы collectstatic забирал js/css (включая table_sort.js).
 STATICFILES_DIRS = [
-    str(PROJECT_ROOT / 'static'),
+    BASE_DIR.parent.parent / 'staticfiles',  # .../tennis/staticfiles (источник)
+    PROJECT_ROOT / 'static',                 # .../tennis/tennis/tennis/static (если появится)
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
