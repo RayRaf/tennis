@@ -13,8 +13,6 @@
   <link rel="stylesheet" href="{% static 'css/performance.css' %}">
   <link rel="stylesheet" href="{% static 'css/settings.css' %}">
   {% block extra_css %}{% endblock %}
-  <!-- debug: table_sort URL resolved by Django static tag: {% static 'js/table_sort.js' %} -->
-  <link rel="preload" href="{% static 'js/table_sort.js' %}" as="script">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
   {% block extra_head %}{% endblock %}
 </head>
