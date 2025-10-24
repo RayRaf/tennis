@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/performance.css' %}">
   <link rel="stylesheet" href="{% static 'css/settings.css' %}">
+  {% block extra_css %}{% endblock %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
   {% block extra_head %}{% endblock %}
 </head>
