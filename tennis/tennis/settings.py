@@ -51,7 +51,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # 👈 обязательно сразу после SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -129,15 +128,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Источники статики (помимо app/static). Добавляем каталог с исходной кастомной статикой.
-# В текущей структуре репозитория кастомная статика лежит в '<repo>/tennis/staticfiles',
-# а не в 'static'. Укажем его явно, чтобы collectstatic забирал js/css (включая table_sort.js).
+# Источники статики (помимо app/static). Берём реальную папку с исходными файлами:
+# <repo>/tennis/staticfiles (то есть BASE_DIR.parent / 'staticfiles').
+# Это позволит collectstatic скопировать файлы 1:1 без хэширования имён.
 STATICFILES_DIRS = [
-    BASE_DIR.parent.parent / 'staticfiles',  # .../tennis/staticfiles (источник)
-    PROJECT_ROOT / 'static',                 # .../tennis/tennis/tennis/static (если появится)
+    BASE_DIR.parent / 'staticfiles',
 ]
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Default primary key field type
