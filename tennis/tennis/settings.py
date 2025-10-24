@@ -128,12 +128,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Источники статики (помимо app/static). Берём реальную папку с исходными файлами:
-# <repo>/tennis/staticfiles (то есть BASE_DIR.parent / 'staticfiles').
-# Это позволит collectstatic скопировать файлы 1:1 без хэширования имён.
-STATICFILES_DIRS = [
-    BASE_DIR.parent / 'staticfiles',
-]
+# Дополнительные источники статики не требуются, так как файлы лежат в app/static.
+# Если появится проектный каталог статики, добавьте его сюда, например:
+# STATICFILES_DIRS = [ PROJECT_ROOT / 'static' ]
+STATICFILES_DIRS = []
 
 
 # Default primary key field type
