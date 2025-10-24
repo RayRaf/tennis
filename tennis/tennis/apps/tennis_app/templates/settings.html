@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Настройки интерфейса{% endblock %}
 
@@ -150,5 +151,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% load static %}{% static 'js/settings.js' %}"></script>
+<script src="{% static 'js/settings.js' %}"></script>
 {% endblock %}
