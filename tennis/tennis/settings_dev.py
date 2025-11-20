@@ -8,17 +8,8 @@ Usage (PowerShell):
 
 from .settings import *  # noqa
 
-# Keep production-like mode (no debug page), but enable convenient static handling.
-DEBUG = False
-
-# Make WhiteNoise serve files directly from finders without requiring collectstatic.
-# This is safe for local development only.
-WHITENOISE_AUTOREFRESH = True
-WHITENOISE_USE_FINDERS = True
-
-# Use non-manifest storage in dev so template {% static %} returns un-hashed paths
-# and you don't need to run collectstatic on each change.
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# Enable DEBUG for local development so Django serves static files automatically
+DEBUG = True
 
 # Keep broad hosts locally; tighten in production.
 ALLOWED_HOSTS = ["*"]

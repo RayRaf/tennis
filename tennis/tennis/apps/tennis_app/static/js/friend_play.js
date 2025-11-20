@@ -3,6 +3,57 @@ let currentServer = 1;
 let gameOver = false;
 let startTime = null;
 let currentGameType = 'single';
+let websocket = null;
+let clubId = null;
+
+// Инициализация WebSocket
+function initWebSocket() {
+    const clubIdElement = document.getElementById('clubId');
+    if (clubIdElement) {
+        clubId = clubIdElement.value;
+    }
+    
+    if (!clubId) {
+        console.log('Club ID not found, WebSocket will not be initialized');
+        return;
+    }
+    
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/friendly_game/${clubId}/`;
+    
+    websocket = new WebSocket(wsUrl);
+    
+    websocket.onopen = function(e) {
+        console.log('WebSocket connection established');
+    };
+    
+    websocket.onclose = function(e) {
+        console.log('WebSocket connection closed');
+    };
+    
+    websocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+    };
+}
+
+function sendGameUpdate() {
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+        const gameData = {
+            game_type: currentGameType,
+            score1: score[0],
+            score2: score[1],
+            player1: document.getElementById('name1').innerText,
+            player2: document.getElementById('name2').innerText,
+            is_finished: gameOver,
+            server: currentServer
+        };
+        
+        websocket.send(JSON.stringify({
+            type: 'game_update',
+            game_data: gameData
+        }));
+    }
+}
 
 function toggleGameType() {
     const type = document.querySelector('input[name="game_type"]:checked')?.value || 'single';
@@ -64,6 +115,8 @@ function startGame() {
     gameOver = false;
     startTime = new Date().toISOString();
     updateTurn();
+    initWebSocket();
+    sendGameUpdate();
 }
 
 function addPoint(player) {
@@ -72,6 +125,7 @@ function addPoint(player) {
     document.getElementById(`score${player}`).innerText = score[player - 1];
     checkWinner();
     updateTurn();
+    sendGameUpdate();
 }
 
 function removePoint(player) {
@@ -80,6 +134,7 @@ function removePoint(player) {
         document.getElementById(`score${player}`).innerText = score[player - 1];
         checkWinner();
         updateTurn();
+        sendGameUpdate();
     }
 }
 
@@ -175,6 +230,22 @@ function finishGame() {
         const team1Label = `${payload.team1_player1} / ${payload.team1_player2}`;
         payload.winning_team = (winnerText === team1Label) ? 1 : 2;
     }
+    
+    // Отправить уведомление об окончании игры через WebSocket
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+        websocket.send(JSON.stringify({
+            type: 'game_end',
+            game_data: {
+                game_type: currentGameType,
+                score1: score[0],
+                score2: score[1],
+                player1: document.getElementById('name1').innerText,
+                player2: document.getElementById('name2').innerText,
+                winner: winnerText
+            }
+        }));
+    }
+    
     fetch("/api/save_friendly_game/", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },

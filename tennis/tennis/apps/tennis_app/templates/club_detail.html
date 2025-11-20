@@ -1,8 +1,28 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ club.name }} — Клуб{% endblock %}
 {% block content %}
   <h1>🏛️ {{ club.name }}</h1>
   <div class="content">
+    <!-- Живая трансляция счета -->
+    <div id="liveGameSection" style="display: none; margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(93, 139, 255, 0.1), rgba(67, 233, 123, 0.1)); border: 2px solid rgba(93, 139, 255, 0.3); border-radius: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+      <h2 style="margin: 0 0 1rem 0; text-align: center;">🔴 Идет товарищеская партия</h2>
+      <div style="display: flex; justify-content: space-around; align-items: center; gap: 2rem; flex-wrap: wrap;">
+        <div style="text-align: center; flex: 1; min-width: 200px;">
+          <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;" id="livePlayer1Name">—</div>
+          <div style="font-size: 3rem; font-weight: 700; color: #43e97b;" id="liveScore1">0</div>
+        </div>
+        <div style="font-size: 2rem; font-weight: 700;">VS</div>
+        <div style="text-align: center; flex: 1; min-width: 200px;">
+          <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;" id="livePlayer2Name">—</div>
+          <div style="font-size: 3rem; font-weight: 700; color: #5d8bff;" id="liveScore2">0</div>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">
+        <span id="liveServerInfo">Подает: —</span>
+      </div>
+    </div>
+
     <h2>📅 События клуба</h2>
     <div class="participants-list">
       <ul>
@@ -90,3 +110,58 @@
   </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+  // WebSocket для трансляции счета
+  const clubId = {{ club.id }};
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/friendly_game/${clubId}/`;
+  
+  let websocket = new WebSocket(wsUrl);
+  
+  websocket.onopen = function(e) {
+    console.log('WebSocket connected for live game updates');
+  };
+  
+  websocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    
+    if (data.type === 'game_update') {
+      const gameData = data.game_data;
+      
+      // Показать секцию с трансляцией
+      document.getElementById('liveGameSection').style.display = 'block';
+      
+      // Обновить данные
+      document.getElementById('livePlayer1Name').textContent = gameData.player1 || '—';
+      document.getElementById('livePlayer2Name').textContent = gameData.player2 || '—';
+      document.getElementById('liveScore1').textContent = gameData.score1 || 0;
+      document.getElementById('liveScore2').textContent = gameData.score2 || 0;
+      
+      // Обновить информацию о подающем
+      const serverName = gameData.server === 1 ? gameData.player1 : gameData.player2;
+      document.getElementById('liveServerInfo').textContent = `Подает: ${serverName}`;
+      
+    } else if (data.type === 'game_end') {
+      const gameData = data.game_data;
+      
+      // Показать результат
+      setTimeout(() => {
+        document.getElementById('liveGameSection').style.display = 'none';
+        alert(`Игра завершена! Победитель: ${gameData.winner}`);
+      }, 3000);
+    }
+  };
+  
+  websocket.onclose = function(e) {
+    console.log('WebSocket disconnected, reconnecting in 3 seconds...');
+    setTimeout(() => {
+      location.reload(); // Перезагрузка для переподключения
+    }, 3000);
+  };
+  
+  websocket.onerror = function(e) {
+    console.error('WebSocket error:', e);
+  };
+</script>
+{% endblock %}

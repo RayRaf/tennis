@@ -157,6 +157,7 @@
             <button onclick="resetGame()">Новая игра</button>
             <button id="finishGameBtn" onclick="finishGame()" style="display: none;">Завершить партию</button>
             <input type="hidden" id="gameStartTime">
+            <input type="hidden" id="clubId" value="{{ club.id }}">
             {% else %}
             <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="p1"/><button type="submit">+1 {{ match.player1.full_name }}</button></form>
             <form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="action" value="p2"/><button type="submit">+1 {{ match.player2.full_name }}</button></form>
