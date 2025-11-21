@@ -117,51 +117,84 @@
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${window.location.host}/ws/friendly_game/${clubId}/`;
   
-  let websocket = new WebSocket(wsUrl);
+  let websocket = null;
+  let reconnectAttempts = 0;
+  let maxReconnectAttempts = 5;
+  let reconnectTimeout = null;
   
-  websocket.onopen = function(e) {
-    console.log('WebSocket connected for live game updates');
-  };
-  
-  websocket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    
-    if (data.type === 'game_update') {
-      const gameData = data.game_data;
+  function connectWebSocket() {
+    try {
+      websocket = new WebSocket(wsUrl);
       
-      // Показать секцию с трансляцией
-      document.getElementById('liveGameSection').style.display = 'block';
+      websocket.onopen = function(e) {
+        console.log('WebSocket connected for live game updates');
+        reconnectAttempts = 0;
+      };
       
-      // Обновить данные
-      document.getElementById('livePlayer1Name').textContent = gameData.player1 || '—';
-      document.getElementById('livePlayer2Name').textContent = gameData.player2 || '—';
-      document.getElementById('liveScore1').textContent = gameData.score1 || 0;
-      document.getElementById('liveScore2').textContent = gameData.score2 || 0;
+      websocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === 'game_update') {
+          const gameData = data.game_data;
+          
+          // Показать секцию с трансляцией
+          document.getElementById('liveGameSection').style.display = 'block';
+          
+          // Обновить данные
+          document.getElementById('livePlayer1Name').textContent = gameData.player1 || '—';
+          document.getElementById('livePlayer2Name').textContent = gameData.player2 || '—';
+          document.getElementById('liveScore1').textContent = gameData.score1 || 0;
+          document.getElementById('liveScore2').textContent = gameData.score2 || 0;
+          
+          // Обновить информацию о подающем
+          const serverName = gameData.server === 1 ? gameData.player1 : gameData.player2;
+          document.getElementById('liveServerInfo').textContent = `Подает: ${serverName}`;
+          
+        } else if (data.type === 'game_end') {
+          const gameData = data.game_data;
+          
+          // Показать результат
+          setTimeout(() => {
+            document.getElementById('liveGameSection').style.display = 'none';
+            alert(`Игра завершена! Победитель: ${gameData.winner}`);
+          }, 3000);
+        }
+      };
       
-      // Обновить информацию о подающем
-      const serverName = gameData.server === 1 ? gameData.player1 : gameData.player2;
-      document.getElementById('liveServerInfo').textContent = `Подает: ${serverName}`;
+      websocket.onclose = function(e) {
+        console.log('WebSocket disconnected');
+        websocket = null;
+        
+        // Попытка переподключения только если не превышен лимит
+        if (reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // Exponential backoff
+          console.log(`Reconnecting in ${delay/1000}s (attempt ${reconnectAttempts}/${maxReconnectAttempts})...`);
+          reconnectTimeout = setTimeout(connectWebSocket, delay);
+        } else {
+          console.warn('WebSocket: Max reconnection attempts reached. Live updates disabled.');
+        }
+      };
       
-    } else if (data.type === 'game_end') {
-      const gameData = data.game_data;
-      
-      // Показать результат
-      setTimeout(() => {
-        document.getElementById('liveGameSection').style.display = 'none';
-        alert(`Игра завершена! Победитель: ${gameData.winner}`);
-      }, 3000);
+      websocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
     }
-  };
+  }
   
-  websocket.onclose = function(e) {
-    console.log('WebSocket disconnected, reconnecting in 3 seconds...');
-    setTimeout(() => {
-      location.reload(); // Перезагрузка для переподключения
-    }, 3000);
-  };
+  // Начальное подключение
+  connectWebSocket();
   
-  websocket.onerror = function(e) {
-    console.error('WebSocket error:', e);
-  };
+  // Очистка при уходе со страницы
+  window.addEventListener('beforeunload', function() {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+    if (websocket) {
+      websocket.close();
+    }
+  });
 </script>
 {% endblock %}
